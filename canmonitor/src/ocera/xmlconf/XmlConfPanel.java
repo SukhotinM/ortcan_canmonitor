@@ -64,7 +64,6 @@ public class XmlConfPanel extends JPanel {
     public XmlConfPanel()
     {
         super(true);
-
 /*
         // Force SwingSet to come up in the Cross Platform L&F
         try {
@@ -79,7 +78,6 @@ public class XmlConfPanel extends JPanel {
         setBorder(BorderFactory.createEtchedBorder());
         setLayout(new BorderLayout());
 */
-
         initActions();
         initGUI();
         initListeners();
@@ -92,6 +90,20 @@ public class XmlConfPanel extends JPanel {
     public XmlConfig getConfig()
     {
         return config;
+    }
+    /**
+     * assign config to show on the panel
+     */
+    public void setConfig(XmlConfig conf)
+    {
+        config = conf;
+        if(config == null)
+            throw new NullPointerException("assigned config is NULL");
+        //tree.setShowsRootHandles(true);
+        DefaultMutableTreeNode nd = new DefaultMutableTreeNode("config");
+        addChildrenToTree(config.getRootElement().getElement(), nd);
+        treeModel.setRoot(nd);
+        refreshEnabledActions();
     }
 
 
@@ -120,10 +132,10 @@ public class XmlConfPanel extends JPanel {
                         String cwd = System.getProperty("user.dir", "/");
                         fc.setCurrentDirectory(new File(cwd));
 
-                        int ret = fc.showOpenDialog(getFrame());
+                        int ret = fc.showOpenDialog(getWindow());
                         if(ret == JFileChooser.APPROVE_OPTION) {
                             String fname = fc.getSelectedFile().getAbsolutePath();
-                            //new InfoMsg(getFrame()).show("oteviram konfiguraci " + fname);
+                            //new InfoMsg(getWindow()).show("oteviram konfiguraci " + fname);
                             openConfigFile(fname);
                         }
                     }
@@ -131,7 +143,7 @@ public class XmlConfPanel extends JPanel {
         act.putValue("toolTip", "Open configuration file");
         actions.put("open", act);
 
-        url = this.getClass().getResource("resources/empty.gif");
+        url = this.getClass().getResource("resources/file-save-as.gif");
         ico = new ImageIcon(url);
         act = new AbstractAction("saveAs", ico) {
                     public void actionPerformed(ActionEvent e)
@@ -144,14 +156,14 @@ public class XmlConfPanel extends JPanel {
 //                        String cwd = System.getProperty("user.dir", "/");
 //                        fc.setCurrentDirectory(new File(cwd));
 
-                        int ret = fc.showSaveDialog(getFrame());
+                        int ret = fc.showSaveDialog(getWindow());
                         if(ret == JFileChooser.APPROVE_OPTION) {
                             String fname = fc.getSelectedFile().getAbsolutePath();
                             saveConfigFile(fname);
                         }
                     }
                 };
-//        act.putValue("toolTip", "Save configuration file");
+        act.putValue("toolTip", "Save configuration to the new file");
         actions.put("saveAs", act);
 
         url = this.getClass().getResource("resources/file-save.gif");
@@ -178,18 +190,6 @@ public class XmlConfPanel extends JPanel {
 
         act.putValue("toolTip", "Expand whole tree");
         actions.put("unfold", act);
-/*
-
-        ico = new ImageIcon("ocera/xmlconf/resources/empty.gif");
-        act = new AbstractAction("quit", ico) {
-                    public void actionPerformed(ActionEvent e) {
-                        System.out.println("collecting garbage & quit");
-                        System.gc();
-                        System.exit(0);
-                    }
-                };
-        actions.put("quit", act);
-*/
     }
 
     // support funstion for unfold tree
@@ -415,7 +415,7 @@ public class XmlConfPanel extends JPanel {
                     else if(type.equalsIgnoreCase("file")) fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
                     String cwd = xel.getValue(System.getProperty("user.dir", "/"));
                     fc.setCurrentDirectory(new File(cwd));
-                    int ret = fc.showOpenDialog(getFrame());
+                    int ret = fc.showOpenDialog(getWindow());
                     if(ret == JFileChooser.APPROVE_OPTION) {
                         String fname = fc.getSelectedFile().getAbsolutePath();
                         cbxValue.setSelectedItem(fname);
@@ -428,51 +428,7 @@ public class XmlConfPanel extends JPanel {
         //        combo listenners
         //==========================================================
     }
-    /*
-    protected JMenuBar createMenubar()
-    {
-        JMenuBar mb = new JMenuBar();
 
-        String[] menuKeys = {"file"};
-        String[] menuLabels = {"File"};
-        for (int i = 0; i < menuKeys.length; i++) {
-            JMenu m = createMenu(menuKeys[i], menuLabels[i]);
-            if (m != null) {
-                mb.add(m);
-            }
-        }
-        return mb;
-    }
-
-    protected JMenu createMenu(String key, String label)
-    {
-        String[][] itemKeys = {{"file", "new", "open", "save", "saveAs", "-", "quit"}};
-        JMenu menu = new JMenu(label);
-        for (int j = 0; j < itemKeys.length; j++) {
-            if (itemKeys[j][0].equals(key)) {
-                for (int i = 1; i < itemKeys[j].length; i++) {
-                    if (itemKeys[j][i].equals("-")) {
-                        menu.addSeparator();
-                    }
-                    else {
-                        Action act = actions.get(itemKeys[j][i]);
-                        JMenuItem mi = null;
-                        if(act != null) {
-                            mi = new JMenuItem(act);
-                        }
-                        else {
-                            mi = new JMenuItem(itemKeys[j][i]);
-                            mi.setEnabled(false);
-                        }
-                        menu.add(mi);
-                    }
-                }
-            }
-            break;
-        }
-        return menu;
-    }
-    */
     protected Component createStatusbar() {
 	    // need to do something reasonable here
 	    status = new StatusBar();
@@ -485,7 +441,7 @@ public class XmlConfPanel extends JPanel {
     protected JToolBar createToolBar()
     {
         JToolBar toolb = new JToolBar();
-        String[] itemKeys = {"open", "save", "unfold"};
+        String[] itemKeys = {"open", "saveAs", "unfold"};
         for (int j = 0; j < itemKeys.length; j++) {
             JButton bt = createToolBarButton(itemKeys[j]);
             toolb.add(bt);
@@ -535,36 +491,41 @@ public class XmlConfPanel extends JPanel {
     /**
      * Find the hosting frame, for the file-chooser dialog.
      */
-    protected JFrame getFrame()
+    protected java.awt.Window getWindow()
     {
 	    for (Container p = getParent(); p != null; p = p.getParent()) {
-	        if (p instanceof JFrame) {
-    		    return (JFrame) p;
+	        if (java.awt.Window.class.isInstance(p)) {
+    		    return (java.awt.Window) p;
 	        }
 	    }
-    	throw new NullPointerException("Container does not contain a JFrame.");
+    	throw new NullPointerException("Container does not contain a JWindow.");
     }
 
     void refreshEnabledActions()
     {
-        boolean can_save = currentFileName != null && config != null;
+        boolean can_save_as = config != null;
+        boolean can_save = currentFileName != null && can_save_as;
         actions.get("save").setEnabled(can_save);
-        actions.get("saveAs").setEnabled(can_save);
+        actions.get("saveAs").setEnabled(can_save_as);
 
     }
 
     //===================================== not GUI functions ========================
     public void openConfigFile(String fname)
     {
-        if(config == null) config = new XmlConfig();
-        config.fromURI(fname);
-        //tree.setShowsRootHandles(true);
-        DefaultMutableTreeNode nd = new DefaultMutableTreeNode("config");
-        addChildrenToTree(config.getRootElement().getElement(), nd);
-        treeModel.setRoot(nd);
+        XmlConfig cfg =  new XmlConfig();
+        cfg.fromURI(fname);
+        setConfig(cfg);
         currentFileName = fname;
-        refreshEnabledActions();
-        getFrame().setTitle("Xml Configurator - " + fname);
+//        getWindow().setTitle("Xml Configurator - " + fname);
+    }
+
+    /**
+     * invoke SaveFile dialog and save config file
+     */
+    public void saveConfigFileAs(String fname)
+    {
+        getAction("saveAs").actionPerformed(null);
     }
 
     void saveConfigFile(String fname)
@@ -579,9 +540,9 @@ public class XmlConfPanel extends JPanel {
             BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(fname));
             out.write(s.getBytes());
         } catch (FileNotFoundException e1) {
-            new InfoMsg(getFrame()).show("Save file error: " + e1);
+            new InfoMsg(getWindow()).show("Save file error: " + e1);
         } catch (IOException e1) {
-            new InfoMsg(getFrame()).show("Save file error: " + e1);
+            new InfoMsg(getWindow()).show("Save file error: " + e1);
         }
 
         refreshEnabledActions();

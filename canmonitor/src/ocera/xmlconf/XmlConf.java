@@ -38,6 +38,8 @@ import javax.swing.*;
  */
 public class XmlConf extends JFrame
 {
+    protected XmlConfPanel xconfPanel = null;
+
     XmlConf()
     {
         super();
@@ -60,20 +62,9 @@ public class XmlConf extends JFrame
         app.setTitle("Xml Configurator");
         app.setBackground(Color.lightGray);
         //app.getContentPane().setLayout(new GridLayout());
-        final XmlConfPanel xconfpan = new XmlConfPanel();
-        app.getContentPane().add(xconfpan);
-
-        // application closing
-        app.setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE );
-        app.addWindowListener(new WindowAdapter()
-        {
-            public void windowClosing(WindowEvent e)
-            {
-                System.out.println("collecting garbage & quit");
-                System.gc();
-                System.exit(0);
-            }
-        });
+        XmlConfPanel xconfpan = new XmlConfPanel();
+        app.xconfPanel = xconfpan;
+        app.initGUI();
 
         if(args.length > 0) {
             xconfpan.openConfigFile(args[0]);
@@ -83,13 +74,80 @@ public class XmlConf extends JFrame
         app.setSize(600, 400);
         app.show();
 
-/*
         Properties prop = System.getProperties();
         for(Enumeration e = prop.keys(); e.hasMoreElements() ;) {
             String key = e.nextElement().toString();
             System.out.println(key + "=" + prop.getProperty(key));
         }
-*/
+
 
     }
+
+    protected void initGUI()
+    {
+        setTitle("XML Configurator");
+
+        JPanel p1 = new JPanel(new BorderLayout());
+        p1.add(createMenu(), BorderLayout.NORTH);
+        p1.add(xconfPanel, BorderLayout.CENTER);
+        getContentPane().add(p1);
+
+        // application closing
+        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE );
+        addWindowListener(new WindowAdapter()
+        {
+            public void windowClosing(WindowEvent e)
+            {
+                System.out.println("collecting garbage & quit");
+                System.gc();
+                System.exit(0);
+            }
+        });
+
+    }
+
+    protected JMenuBar createMenu()
+    {
+        JMenuBar mb = new JMenuBar();
+
+        String[] menuKeys = {"file"};
+        String[] menuLabels = {"File"};
+        for (int i = 0; i < menuKeys.length; i++) {
+            JMenu m = createMenu(menuKeys[i], menuLabels[i]);
+            if (m != null) {
+                mb.add(m);
+            }
+        }
+        return mb;
+    }
+
+    protected JMenu createMenu(String key, String label)
+    {
+        String[][] itemKeys = {{"file", "new", "open", "save", "saveAs", "-", "quit"}};
+        JMenu menu = new JMenu(label);
+        for (int j = 0; j < itemKeys.length; j++) {
+            if (itemKeys[j][0].equals(key)) {
+                for (int i = 1; i < itemKeys[j].length; i++) {
+                    if (itemKeys[j][i].equals("-")) {
+                        menu.addSeparator();
+                    }
+                    else {
+                        Action act = xconfPanel.getAction(itemKeys[j][i]);
+                        JMenuItem mi = null;
+                        if(act != null) {
+                            mi = new JMenuItem(act);
+                        }
+                        else {
+                            mi = new JMenuItem(itemKeys[j][i]);
+                            mi.setEnabled(false);
+                        }
+                        menu.add(mi);
+                    }
+                }
+            }
+            break;
+        }
+        return menu;
+    }
+
 }

@@ -14,20 +14,31 @@ import java.util.*;
 
 public class FFile 
 {
-	private String ffileName;
+    public static final boolean MODE_APPEND = true;
+    public static final boolean MODE_OVERWRITE = false;
+    public static final boolean OVERWRITE_FILE = true;
+    public static final boolean CAN_NOT_OVERWRITE_FILE = false;
+
+	private String fileName;
 	
-	public FFile(String fname) {ffileName = fname;}
+	public FFile(String fname) {fileName = fname;}
 
 //-----------------------------------------------------------------------------	
-	public String fileName() {return ffileName;}
+	public String getFileName() {return fileName;}
 
-//-----------------------------------------------------------------------------	
-	public LinkedList toStringLList() throws FileNotFoundException, IOException
+//-----------------------------------------------------------------------------
+	/**
+     * opens file and returns its contens as LinkedList of its lines
+     * @return LinkedList of line strings
+     * @throws FileNotFoundException
+     * @throws IOException
+     */
+    public LinkedList toStringLList() throws FileNotFoundException, IOException
 	{
 		BufferedReader reader = null;
 		LinkedList al = new LinkedList();
 		try {
-			reader = new BufferedReader(new FileReader(ffileName));
+			reader = new BufferedReader(new FileReader(fileName));
 			for(String nextLine = reader.readLine(); nextLine != null; nextLine = reader.readLine()) {
 				al.add(nextLine);
 			}
@@ -45,15 +56,20 @@ public class FFile
 				try {
 					reader.close();
 				} catch(IOException e) {
-					System.err.println(fileName() + " - IO_error_close");
+					System.err.println(fileName + " - IO_error_close");
 				}
 			}
 		}
 		return al;
 	}
 
-//-----------------------------------------------------------------------------	
-	public String asString() throws FileNotFoundException, IOException
+//-----------------------------------------------------------------------------
+	/**
+     * @return contens of the file as a single string
+     * @throws FileNotFoundException
+     * @throws IOException
+     */
+    public String asString() throws FileNotFoundException, IOException
 	{
 		LinkedList ll = toStringLList();
 		String s = "";
@@ -69,5 +85,24 @@ public class FFile
 		LinkedList ll = toStringLList();
         return (String[]) ll.toArray(new String[ll.size()]);
 	}
+
+    /**
+     * @return true if file on its path exists
+     */
+    boolean exists()
+    {
+        return new File(fileName).exists();
+    }
+
+    public void writeString(String new_contens, boolean append, boolean can_overwrite) throws IOException, FFileException
+    {
+        if(!can_overwrite) {
+            File f = new File(fileName);
+            if(f.exists()) throw new FFileException("File '" + fileName + "' exists.");
+        }
+        BufferedOutputStream os = new BufferedOutputStream(new FileOutputStream(fileName, append));
+        os.write(new_contens.getBytes());
+        os.flush();
+    }
 }
 

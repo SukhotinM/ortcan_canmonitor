@@ -7,6 +7,7 @@
  */
 package ocera.rtcan.monitor;
 import ocera.util.*;
+import ocera.util.xmlconfig.XmlConfig;
 import ocera.msg.*;
 import ocera.rtcan.eds.*;
 import ocera.rtcan.CanMonClient;
@@ -22,6 +23,7 @@ import java.io.*;
 import java.util.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.net.URL;
 
 /**
  * document for tblProp
@@ -76,7 +78,7 @@ public class CanMonitor extends JFrame implements Runnable {
     protected ODNode selectedObject = null;
     protected int nodeNo = 1;  // number of the node to communicate with
 
-    String canProxyIP = "localhost";
+    //String canProxyIP = "localhost";
 
     protected Container pane;
     protected ActionMap actions = new ActionMap();
@@ -97,14 +99,25 @@ public class CanMonitor extends JFrame implements Runnable {
     protected JTextArea txtMsg;
     protected AttrModel attrModel = new AttrModel();
 
+    protected XmlConfig xmlConfig = new XmlConfig();
+    public static final String CONFIG_FILE_NAME = "CanMonitor.conf.xml";
+    protected String configFile = "N/A";
+    protected boolean configChanged = false;
+
     public static void main (String [] args)
     {
-        CanMonitor app = new CanMonitor();
+        CanMonitor app = new CanMonitor(args);
         app.setDefaultCloseOperation(EXIT_ON_CLOSE);
-        app.processCmdLine(args);
         app.setSize(800, 600);
         app.setVisible(true);
 //        app.pack();
+    }
+
+    private void openConfigDialog()
+    {
+        ConfigDialog xconf = new ConfigDialog(xmlConfig);
+        xconf.show();
+        configChanged = true;
     }
 
     private void processCmdLine(String[] args)
@@ -118,7 +131,10 @@ public class CanMonitor extends JFrame implements Runnable {
                 if(c == 'a') {
                     // address
                     i++;
-                    if(i < args.length) canProxyIP = args[i];
+                    if(i < args.length) {
+                        xmlConfig.getRootElement().cd("/connection/host").setValue(args[i]);
+                        //canProxyIP = args[i];
+                    }
                 }
                 if(c == 'n') {
                     // node
@@ -139,19 +155,96 @@ public class CanMonitor extends JFrame implements Runnable {
         if(edsFile != null) {
             openEDS(edsFile);
         }
-        if(canProxyIP.length() > 0) {
-            txtMsg.append("\nconnecting to " + canProxyIP + " ...\n");
-            canConn.connect(canProxyIP, 0);
+    }
+
+    protected void connect()
+    {
+        String ip = xmlConfig.getRootElement().cd("/connection/host").getValue("localhost").trim();
+        String port = xmlConfig.getRootElement().cd("/connection/port").getValue("1001").trim();
+        int p = FString.toInt(port);
+        if(ip.length() > 0) {
+            txtMsg.append("\nconnecting to " + ip + " ...\n");
+            canConn.connect(ip, p);
             txtMsg.append(canConn.getErrMsg() + "\n");
         }
     }
 
-    public CanMonitor()
+    protected void disConnect()
+    {
+        canConn.disconnect();
+    }
+
+    public CanMonitor(String[] cmd_line_args)
     {
         super("RT CAN monitor - Alfa 0.1");
         initGui();
         init();
+        loadConfig();
+        processCmdLine(cmd_line_args);
+        connect();
 //        setBounds(50, 50, 800, 600);
+    }
+
+    /**
+     * Opens configuration file, triing next locations:<br>
+     * 1. user home directory<br>
+     * 2. current directory<br>
+     * 3. default config file
+     */
+    protected void loadConfig()
+    {
+        // try to find configuration
+        String home = System.getProperty("user.home", "N/A");
+        String pwd = System.getProperty("user.dir", ".");
+        String configfile;
+
+        // lok if home exists
+        File ff;
+        configfile = home + "/.canmonitor";
+        configFile = "";
+        ff = new File(configfile);
+        if(!ff.exists()) {
+            // try to make directory at home
+            if(ff.mkdir()) {
+                configFile = home + "/.canmonitor/" + CONFIG_FILE_NAME;
+            }
+        }
+        else {
+            configFile = home + "/.canmonitor/" + CONFIG_FILE_NAME;
+        }
+
+        configfile = home + "/.canmonitor/" + CONFIG_FILE_NAME;;
+        ff = new File(configfile);
+        if(!ff.canRead()) {
+            configfile = pwd + "/" + CONFIG_FILE_NAME;
+            ff = new File(configfile);
+            if(!ff.canRead()) {
+                // find default config in resources
+                URL url = this.getClass().getResource("resources/" + CONFIG_FILE_NAME);
+                configfile = url.getFile();
+            }
+            else {
+                configFile = configfile;
+            }
+        }
+        xmlConfig.fromURI(configfile);
+    }
+
+    protected void saveConfig()
+    {
+        if(!configChanged) return;
+        // is there reasonable place to write config
+        if(configFile.length() == 0) return;
+
+        String s = xmlConfig.toString();
+        FFile ff = new FFile(configFile);
+        try {
+            ff.writeString(s, FFile.MODE_OVERWRITE, FFile.OVERWRITE_FILE);
+        } catch (IOException e) {
+            new ErrorMsg(this).show("Error writing config file: " + e);
+        } catch (FFileException e) {
+            new ErrorMsg(this).show("Error writing config file: " + e);
+        }
     }
 
     public void initGui()
@@ -181,6 +274,14 @@ public class CanMonitor extends JFrame implements Runnable {
                     }
                 };
         actions.put("OpenEds", act);
+
+        act = new AbstractAction("Config") {
+                    public void actionPerformed(ActionEvent e) {
+                        openConfigDialog();
+                    }
+                };
+        actions.put("Config", act);
+
         act = new AbstractAction("Quit") {
                     public void actionPerformed(ActionEvent e) {
                         cleanUp();
@@ -195,11 +296,17 @@ public class CanMonitor extends JFrame implements Runnable {
         //==========================================================
         JMenuBar menuBar = new JMenuBar();
         setJMenuBar(menuBar);
+
         JMenu menu = new JMenu("File");
         menuBar.add(menu);
         JMenuItem itm = new JMenuItem(actions.get("OpenEds"));
         menu.add(itm);
         itm = new JMenuItem(actions.get("Quit"));
+        menu.add(itm);
+
+        menu = new JMenu("Tools");
+        menuBar.add(menu);
+        itm = new JMenuItem(actions.get("Config"));
         menu.add(itm);
 
         //==========================================================
@@ -392,7 +499,8 @@ public class CanMonitor extends JFrame implements Runnable {
     {
 //        if(canReaderThread != null)
 //            try {canReaderThread.join();} catch(InterruptedException e) {}
-        canConn.disconnect();
+        disConnect();
+        saveConfig();
     }
 
     private void openEDS(String fname) {
