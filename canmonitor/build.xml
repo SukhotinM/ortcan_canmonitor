@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!-- build file for OCERA CanMonitor -->
 
-<project name="canmon" default="build" basedir=".">
+<project name="canmon" default="default" basedir=".">
 
     <property name="src" location="src"/>
     <property name="class" location="class"/>
@@ -10,7 +10,10 @@
     <property name="path.monitor" value="ocera/rtcan/monitor"/>
     <property name="path.xmlconf" value="ocera/xmlconf"/>
 
-    <target name="build" depends="compile">
+    <target name="default" depends="canmonitor, xmlconf">
+    </target>
+
+    <target name="canmonitor" depends="jar-monitor">
     </target>
 
     <target name="xmlconf" depends="jar-xmlconf">
@@ -20,13 +23,15 @@
          <mkdir dir="${class}"/>
      </target>
 
-    <target name="compile" depends="prepare-compile">
+    <target name="compile" depends="compile-monitor, compile-xmlconf">
+        <!--
         <javac srcdir="${src}" destdir="${class}"
             classpath="${jar.jdom}"
             debug="true"
             optimize="false"
             includes="ocera/**/*.java"
             />
+          -->
     </target>
 
     <target name="compile-monitor" depends="prepare-compile">
@@ -39,6 +44,13 @@
                 <include name="*.conf.xml"/>
             </fileset>
         </copy>
+        <!-- Copy the XmlConfPanel icons images -->
+        <copy todir="${class}/${path.xmlconf}/resources">
+            <fileset dir="${src}/${path.xmlconf}/resources" >
+                <include name="*.gif"/>
+                <include name="*.png"/>
+            </fileset>
+        </copy>
         <javac srcdir="${src}" destdir="${class}"
             classpath="${jar.jdom}"
             debug="true"
@@ -49,15 +61,7 @@
 
     <!-- Generate the jar file -->
     <target name="jar-monitor" depends="clean, compile-monitor">
-        <!-- jdom library should be a part of canmonitor.jar because
-               java -cp jdom.jar -jar canmonitor.jar
-             doesn't work, I shoul use
-               java -cp jdom.jar:canmonitor.jar ocera.rtcan.monitor.CanMonitor
-             I don't know why, if somebody knows it please sen me an email 'vacek@rtime.felk.cvut.cz'
-             If I include jdom.jar into canmonitor.jar, I can write
-               java -jar canmonitor.jar
-        -->
-        <unjar dest="${class}" src="${lib}/jdom.jar"/>
+        <!-- <unjar dest="${class}" src="${lib}/jdom.jar"/> -->
         <jar jarfile="${lib}/canmonitor.jar" basedir="${class}"
             manifest="${src}/${path.monitor}/manifest">
             <!-- Do not include test files in the runtime jar
@@ -87,7 +91,7 @@
 
     <!-- Generate the jar file -->
     <target name="jar-xmlconf" depends="clean, compile-xmlconf">
-        <unjar dest="${class}" src="${lib}/jdom.jar"/>
+        <!-- <unjar dest="${class}" src="${lib}/jdom.jar"/> -->
         <jar jarfile="${lib}/xmlconf.jar" basedir="${class}"
             manifest="${src}/${path.xmlconf}/manifest">
         </jar>
@@ -98,9 +102,12 @@
     </target>
 
     <target name="clean" >
-         <delete quiet="true">
-             <fileset dir="${class}" includes="**/*.class" defaultexcludes="no"/>
-         </delete>
+        <delete quiet="true">
+            <fileset dir="${class}" includes="**/*.class" defaultexcludes="no"/>
+        </delete>
+        <delete quiet="true">
+            <fileset dir="${lib}" includes="*.jar" excludes="jdom*" defaultexcludes="no"/>
+        </delete>
     </target>
 
 </project>

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="ISO-8859-2"?>
 <config version="0.0.1">
   <macros hidden="yes" />
-  <data version="1" help="Version of CanMonitor configuration file" readonly="yes">
+  <data help="Version of CanMonitor configuration file" readonly="yes">
     <connection caption="canmond">
       <host value="localhost" default="localhost"/>
-      <port value="1001" default="1001"/>
+      <port value="10001" default="10001"/>
     </connection>
     <canopen caption="CANopen">
       <node value="1" default="1" help="Number of CANopen device to communicate with."/>

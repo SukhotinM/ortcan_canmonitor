@@ -96,6 +96,37 @@ public class XmlConfig
         return el.getValue(defval);
     }
 
+    /**
+     * @param path path to desired element
+     * @param val value to set
+     * @return true if succed
+     */
+    public boolean setValue(String path, String val)
+    {
+        XmlConfElement el = getRootElement();
+        if(el == null) return false;
+        el = el.cd(path);
+        if(el == null) return false;
+        el.setAttribute("value", val);
+        return true;
+    }
+
+    /**
+     * @param path path to desired element
+     * @param val value to set
+     * @throws XmlConfElementException
+     */
+    public void setValueThrow(String path, String val) throws XmlConfElementException
+    {
+        XmlConfElement el = getRootElement();
+        if(el == null)
+            throw new XmlConfElementException("Root element == null");
+        el = el.cd(path);
+        if(el == null)
+            throw new XmlConfElementException("Path '" + path + "' does not exists.");
+        el.setAttributeThrow("value", val);
+    }
+
     public String toString()
     {
         if(doc == null) return "{null}";

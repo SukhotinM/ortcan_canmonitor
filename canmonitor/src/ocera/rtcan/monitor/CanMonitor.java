@@ -31,14 +31,14 @@ import java.net.URL;
 class AttrModel extends AbstractTableModel
  {
     protected EdsTreeNode attrNode = null;
-    public static final String[] attrColNames = {"Name", "Value"};
+    public static final String[] attrColNames = {"Name", "Value", "Description"};
 
     public void setAttrNode(EdsTreeNode attrNode) {
         this.attrNode = attrNode;
     }
 
     public int getColumnCount() {
-        return 2;
+        return 3;
     }
 
     public int getRowCount() {
@@ -51,9 +51,10 @@ class AttrModel extends AbstractTableModel
     }
 
     public Object getValueAt(int rowIndex, int columnIndex) {
-        if(attrNode == null) return "<NULL>";   //modele has not assigned node
+        if(attrNode == null) return "<NULL>";   //model has not assigned node
         if(columnIndex == 0) return attrNode.getAttrName(rowIndex);
         else if(columnIndex == 1) return attrNode.getAttrValue(rowIndex);
+        else if(columnIndex == 2) return attrNode.getAttrDescription(rowIndex);
         else return "<NULL>";
     }
 
@@ -89,18 +90,21 @@ public class CanMonitor extends JFrame implements Runnable {
     protected JTextField edCanID;
     protected JTextField[] edCanData = new JTextField[8];
     protected JButton btSend;
+    protected JTextField edNodeID;
 
     protected JTabbedPane tabPane;
     protected JTree treeEds;
     protected DefaultTreeModel treeEdsModel;
-    protected DefaultMutableTreeNode treeEdsRootNode;
+    protected DefaultMutableTreeNode treeEdsRootNode = new DefaultMutableTreeNode("root");
     protected JTextArea txtMsg;
     protected AttrModel attrModel = new AttrModel();
+    protected JCheckBox cbxShowRoughMessages;
 
     protected XmlConfig xmlConfig = new XmlConfig();
     public static final String CONFIG_FILE_NAME = "CanMonitor.conf.xml";
-    protected String configFile = "N/A";
+    //protected String configFile = "N/A";
     protected boolean configChanged = false;
+    private ConfigLookup confLookup = new ConfigLookup(".canmonitor", CONFIG_FILE_NAME, this.getClass());
 
     public static void main (String [] args)
     {
@@ -130,7 +134,7 @@ public class CanMonitor extends JFrame implements Runnable {
                     // address
                     i++;
                     if(i < args.length) {
-                        xmlConfig.getRootElement().cd("/connection/host").setValue(args[i]);
+                        xmlConfig.setValue("/connection/host", args[i]);
                         //canProxyIP = args[i];
                     }
                 }
@@ -138,30 +142,33 @@ public class CanMonitor extends JFrame implements Runnable {
                     // node
                     i++;
                     if(i < args.length) {
-                        xmlConfig.getRootElement().cd("/canopen/node").setValue(args[i]);
+                        xmlConfig.setValue("/canopen/node", args[i]);
+                        //xmlConfig.getRootElement().cd("/canopen/node").setValue(args[i]);
                         //nodeNo = FString.toInt(args[i]);
                     }
                 }
-                else if(c == 'f') {
+                else if(c == 'e') {
                     // EDS file name
                     i++;
                     if(i < args.length) edsFile = args[i];
                 }
                 else if(c == 'h') {
                     // help
-                    System.out.println("USAGE: cammonitor -a host -n node -f EDS_file_name\n");
+                    System.out.println("USAGE: cammonitor -a host -n node -e EDS_file_name\n");
+                    System.exit(0);
                 }
             }
         }
         if(edsFile != null) {
-            openEDS(edsFile);
+            treeEdsRootNode.setUserObject(edsFile);
+//            openEDS(edsFile);
         }
     }
 
     protected void connect()
     {
         String ip = xmlConfig.getRootElement().cd("/connection/host").getValue("localhost").trim();
-        String port = xmlConfig.getRootElement().cd("/connection/port").getValue("1001").trim();
+        String port = xmlConfig.getValue("/connection/port", "1001").trim();
         int p = FString.toInt(port);
         if(ip.length() > 0) {
             txtMsg.append("\nconnecting to " + ip + " ...\n");
@@ -178,68 +185,37 @@ public class CanMonitor extends JFrame implements Runnable {
     public CanMonitor(String[] cmd_line_args)
     {
         super("RT CAN monitor - Alfa 0.1");
+        loadConfig();
+        processCmdLine(cmd_line_args);
         initActions();
         initGui();
         init();
-        loadConfig();
-        processCmdLine(cmd_line_args);
         connect();
 //        setBounds(50, 50, 800, 600);
     }
 
     /**
      * Opens configuration file, triing next locations:<br>
-     * 1. user home directory<br>
-     * 2. current directory<br>
-     * 3. default config file
      */
     protected void loadConfig()
     {
-        // try to find configuration
-        String home = System.getProperty("user.home", "N/A");
-        String pwd = System.getProperty("user.dir", ".");
-        String configfile;
-
-        // lok if home exists
-        File ff;
-        configfile = home + "/.canmonitor";
-        configFile = "";
-        ff = new File(configfile);
-        if(!ff.exists()) {
-            // try to make directory at home
-            if(ff.mkdir()) {
-                configFile = home + "/.canmonitor/" + CONFIG_FILE_NAME;
-            }
-        }
-        else {
-            configFile = home + "/.canmonitor/" + CONFIG_FILE_NAME;
-        }
-
-        configfile = home + "/.canmonitor/" + CONFIG_FILE_NAME;;
-        ff = new File(configfile);
-        if(!ff.canRead()) {
-            configfile = pwd + "/" + CONFIG_FILE_NAME;
-            ff = new File(configfile);
-            if(!ff.canRead()) {
-                // find default config in resources
-                URL url = this.getClass().getResource("resources/" + CONFIG_FILE_NAME);
-                configfile = url.getFile();
-            }
-            else {
-                configFile = configfile;
-            }
-        }
-        xmlConfig.fromURI(configfile);
+        String conf_file = confLookup.findConfigFile();
+        System.out.println("loading config from '" + conf_file + "'");
+        if(conf_file != null) xmlConfig.fromURI(conf_file);
+        else System.err.println("ERROR - Configuration file " + CONFIG_FILE_NAME + " not found.");
     }
 
     protected void saveConfig()
     {
         if(!configChanged) return;
-        // is there reasonable place to write config
-        if(configFile.length() == 0) return;
+        String conf_file = confLookup.createConfigFile();
+        if(conf_file == null) {
+            System.err.println("ERROR - Configuration file " + CONFIG_FILE_NAME + " cann't be written.");
+            return;
+        }
 
         String s = xmlConfig.toString();
-        FFile ff = new FFile(configFile);
+        FFile ff = new FFile(conf_file);
         try {
             ff.writeString(s, FFile.MODE_OVERWRITE, FFile.OVERWRITE_FILE);
         } catch (IOException e) {
@@ -263,13 +239,16 @@ public class CanMonitor extends JFrame implements Runnable {
                         filter.addExtension("eds");
                         filter.setDescription("EDS Electronic Data Sheets");
                         fc.setFileFilter(filter);
-                        fc.setCurrentDirectory(new File("d:/java/canmonitor"));
+                        String pwd = System.getProperty("user.dir", ".");
+                        fc.setCurrentDirectory(new File(pwd));
 
                         int ret = fc.showOpenDialog(CanMonitor.this);
                         if(ret == JFileChooser.APPROVE_OPTION) {
                             String fname = fc.getSelectedFile().getAbsolutePath();
                             openEDS(fname);
+                            tabPane.setSelectedIndex(0);    // select tab EDS
                         }
+
                     }
                 };
         actions.put("OpenEds", act);
@@ -303,9 +282,6 @@ public class CanMonitor extends JFrame implements Runnable {
 
     public void initGui()
     {
-        //==========================================================
-        //        menu toolbar
-        //==========================================================
         pane = getContentPane();
 
         //==========================================================
@@ -331,14 +307,25 @@ public class CanMonitor extends JFrame implements Runnable {
         //==========================================================
         JToolBar tb = new JToolBar();
         tb.add(actions.get("OpenEds"));
+        //tb.addSeparator();
+        //tb.add(new JSeparator(SwingConstants.VERTICAL));
+        tb.add(new Box.Filler(new Dimension(0, 0), new Dimension(5000, 5), new Dimension(10000, 1000)));
+        tb.add(new JLabel("node ID: "));
+        tb.addSeparator(new Dimension(2, 0));
+        edNodeID = new JTextField(xmlConfig.getValue("/canopen/node", "1"));
+        edNodeID.setMinimumSize(new Dimension(30, 10));
+        //edNodeID.setPreferredSize(new Dimension(10, edNodeID.getPreferredSize().height));
+        //edNodeID.setMaximumSize(new Dimension(100, 1000));
+        tb.add(edNodeID);
         pane.add(tb, BorderLayout.NORTH);
+
 
         //==========================================================
         //        layout
         //==========================================================
 
         //---------------- EDS tab -----------------------------
-        treeEdsRootNode = new DefaultMutableTreeNode("root");
+        //treeEdsRootNode =
         treeEdsModel = new DefaultTreeModel(treeEdsRootNode);
         treeEds = new JTree(treeEdsModel);
         treeEds.setShowsRootHandles(true);
@@ -385,8 +372,13 @@ public class CanMonitor extends JFrame implements Runnable {
         btSend.setMnemonic(KeyEvent.VK_S);
         jpan.add(btSend);
 
+        cbxShowRoughMessages = new JCheckBox("Show rough messages");
+        cbxShowRoughMessages.setMnemonic(KeyEvent.VK_S);
+        cbxShowRoughMessages.setSelected(false);
+
         JPanel panCAN = new JPanel(new BorderLayout());
-        panCAN.add(scrlpantxt);
+        panCAN.add(cbxShowRoughMessages, BorderLayout.NORTH);
+        panCAN.add(scrlpantxt, BorderLayout.CENTER);
         panCAN.add(jpan, BorderLayout.SOUTH);
 
         tabPane = new JTabbedPane();
@@ -439,7 +431,7 @@ public class CanMonitor extends JFrame implements Runnable {
                     msg += s;
                 }
                 msg += "]}";
-                txtMsg.append("\nSENDING: " + msg);
+                txtMsg.append("SENDING:\t" + msg + "\n");
                 canConn.send(msg);
             }
         });
@@ -453,9 +445,9 @@ public class CanMonitor extends JFrame implements Runnable {
             public void actionPerformed(ActionEvent e) {
                 String s = Integer.toString(selectedObject.index, 16);
                 s += " " + Integer.toString(selectedObject.subIndex, 16);
-                String node = xmlConfig.getValue("/canopen/node", "1");
+                String node = edNodeID.getText();
                 String msg = "{SDOR UPLOAD 0 0 " + node + " " + s + "}";
-                txtMsg.append("\nSENDING: " + msg);
+                txtMsg.append("SENDING:\t" + msg + "\n");
                 canConn.send(msg);
             }
         });
@@ -466,13 +458,13 @@ public class CanMonitor extends JFrame implements Runnable {
         // {SDOR DOWNLOAD server_port client_port node index subindex [dd dd ...]}
         btDownloadSDO.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                String node = xmlConfig.getValue("/canopen/node", "1");
+                String node = edNodeID.getText();
                 String msg = "{SDOR DOWNLOAD 0 0 ";
                 msg += node + " ";
                 msg += Integer.toString(selectedObject.index, 16) + " ";
                 msg += Integer.toString(selectedObject.subIndex, 16) + " ";
                 msg += "[" + edSDO.getText() + "]}";
-                txtMsg.append("\nSENDING: " + msg);
+                txtMsg.append("SENDING:\t" + msg + "\n");
                 canConn.send(msg);
             }
         });
@@ -500,13 +492,18 @@ public class CanMonitor extends JFrame implements Runnable {
             btDownloadSDO.setEnabled(false);
         }
         else {
-            btUploadSDO.setEnabled((selectedObject.accessType & ODNode.ACCES_TYPE_READ) != 0);
-            btDownloadSDO.setEnabled((selectedObject.accessType & ODNode.ACCES_TYPE_WRITE) != 0);
+            btUploadSDO.setEnabled(selectedObject.accessType < ODNode.ACCES_TYPE_WO);
+            btDownloadSDO.setEnabled(selectedObject.accessType > ODNode.ACCES_TYPE_RO);
         }
     }
 
     public void init()
     {
+        if(treeEdsRootNode.getUserObject() != null) {
+            String s = (String)treeEdsRootNode.getUserObject();
+            // if EDS file is not assigned from command line user object name is 'root'
+            if(!s.equalsIgnoreCase("root")) openEDS((String)treeEdsRootNode.getUserObject());
+        }
         canConn.setGuiUpdate(this);
 //        canConn.connect(serverAddr, 0);
 
@@ -522,7 +519,8 @@ public class CanMonitor extends JFrame implements Runnable {
         saveConfig();
     }
 
-    private void openEDS(String fname) {
+    private void openEDS(String fname)
+    {
         System.out.println("opening " + fname);
         System.out.println("start at " + new Date());
 
@@ -640,7 +638,7 @@ public class CanMonitor extends JFrame implements Runnable {
                     else if(index != -1 && subindex != -1) {
                         //subindex
                         odsubnd = new ODNode();
-                        odsubnd.isSubObject = true;
+                        odsubnd.subObject = true;
 //                        odsubnd.type = ODNode.STRUCT_ITEM;
                         odlst.add(odsubnd);
                         //if(tnd != null)
@@ -676,6 +674,7 @@ public class CanMonitor extends JFrame implements Runnable {
 
         objectDictionary = (ODNode[]) odlst.toArray(new ODNode[odlst.size()]);
         Arrays.sort(objectDictionary);
+
         DefaultMutableTreeNode tnd = null;
         // add nodes to the tree
         int oldix = -1;
@@ -714,13 +713,15 @@ public class CanMonitor extends JFrame implements Runnable {
             if(s == null) break;
             System.out.println("CAN_MONITOR: received CAN message " + s);
             msgCount++;
-            txtMsg.append("\n[" + msgCount + "] CAN message received: " + s);
 
             // parse datagram
             s = FString.slice(s, 1, -1);
             String ss[];
             if(s.matches("CANDTG.*")) {
                 // found CAN msg start
+                if(!cbxShowRoughMessages.isSelected()) continue;
+
+                txtMsg.append("RECEIVE[" + msgCount + "]:\t" + s + "\n");
                 s = s.substring(7);
                 CanMsg canmsg = new CanMsg();
                 ss = StringParser.cutInt(s, 16); s = ss[1]; //flags
@@ -738,7 +739,7 @@ public class CanMonitor extends JFrame implements Runnable {
                         canmsg.data[canmsg.length++] = (short) FString.toInt(ss[0], 16);
                     }
                 }
-                txtMsg.append("\n\t" + canmsg);
+                txtMsg.append("\t" + canmsg + "\n");
             }
             else if(s.matches("SDOC.*")) {
                 // found SDO msg start
@@ -747,6 +748,7 @@ public class CanMonitor extends JFrame implements Runnable {
                 int index, subindex;
                 short[] value = null;
                 boolean upload = false;
+                txtMsg.append("RECEIVE[" + msgCount + "]:\t" + s + "\n");
                 s = s.substring(5).trim();
                 if(s.matches("UPLOAD.*")) {s = s.substring(7); upload = true;}
                 else if(s.matches("DOWNLOAD.*")) s = s.substring(9);

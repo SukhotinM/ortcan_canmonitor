@@ -5,23 +5,57 @@ import ocera.util.FString;
 
 import java.lang.reflect.Field;
 
+class DataTypeDef
+{
+    public String name = "UNKNOWN";
+    public int len = -1;
+
+    DataTypeDef(String n, int l) {name = n; len = l;}
+}
+
 /**
- * Represent EDS node included in OD (almost all see EdsNode)
+ * Represent EDS entry inserted to OD (almost all see EdsNode)
  */
 public class ODNode implements EdsTreeNode, Comparable
 {
-//    public final static int ALONE = 0;
-//    public final static int STRUCT_NODE = 1;
-//    public final static int STRUCT_ITEM = 2;
+    public final static String objectTypeNames[] = {
+        "UNDEF", "UNDEF", "DOMAIN",  "UNDEF", "UNDEF", "DEFTYPE",
+        "DEFSTRUCT", "VAR", "ARRAY", "RECORD"
+    };
 
-    public final static int ACCES_TYPE_READ = 1;
-    public final static int ACCES_TYPE_WRITE = 2;
+    public final static DataTypeDef dataTypeDefs[] = {
+         new DataTypeDef("UNKNOWN", -1), new DataTypeDef("BOOLEAN", 1),
+         new DataTypeDef("INTEGER8", 1), new DataTypeDef("INTEGER16", 2), new DataTypeDef("INTEGER32", 4),
+         new DataTypeDef("UNSIGNED8", 1), new DataTypeDef("UNSIGNED16", 2), new DataTypeDef("UNSIGNED32", 4),
+         new DataTypeDef("REAL32", 4),
+         new DataTypeDef("VISIBLE_STRING", 0), new DataTypeDef("OCTET_STRING", 0), new DataTypeDef("UNICODE_STRING", 0),
+         new DataTypeDef("TIME_OF_DAY", -1), new DataTypeDef("TIME_DIFERENCE", -1),
+         new DataTypeDef("reserved", -1),
+         new DataTypeDef("DOMAIN", -1),
+         new DataTypeDef("INTEGER24", 3),
+         new DataTypeDef("REAL64", 8),
+         new DataTypeDef("INTEGER40", 5), new DataTypeDef("INTEGER48", 6), new DataTypeDef("INTEGER56", 7), new DataTypeDef("INTEGER64", 8),
+         new DataTypeDef("UNSIGNED24", 3),
+         new DataTypeDef("reserved", -1),
+         new DataTypeDef("UNSIGNED40", 5), new DataTypeDef("UNSIGNED48", 6), new DataTypeDef("UNSIGNED56", 7), new DataTypeDef("UNSIGNED64", 8),
+         new DataTypeDef("reserved", -1), new DataTypeDef("reserved", -1), new DataTypeDef("reserved", -1), new DataTypeDef("reserved", -1),
+         new DataTypeDef("PDO_COMMUNICATION_PARAMETER", -1), new DataTypeDef("PDO_MAPPING", -1),
+         new DataTypeDef("SDO_PARAMETER", -1),
+         new DataTypeDef("IDENTITY", -1)
+    };
+
+    public final static int ACCES_TYPE_CONST = 0;
+    public final static int ACCES_TYPE_RO = 1;
+    public final static int ACCES_TYPE_RW = 2;
+    public final static int ACCES_TYPE_RWR = 3;
+    public final static int ACCES_TYPE_RWW = 4;
+    public final static int ACCES_TYPE_WO = 5;
 
     public ODNode[] subNodes = null;
 
     public short[] value = null;
 
-    public boolean isSubObject = false; // is it item if struct or array ?
+    public boolean subObject = false; // is it item if struct or array ?
 
     // this array to know names of next fielt in runtime
     protected static Field[] fields = null;
@@ -58,6 +92,14 @@ public class ODNode implements EdsTreeNode, Comparable
         }
     }
 
+    /**
+     * @return true if object is sub object (is referenced by subindex)
+     */
+    public boolean isSubObject()
+    {
+        return subObject;
+    }
+
     public String toString()
 	{
 		return getName();
@@ -66,7 +108,7 @@ public class ODNode implements EdsTreeNode, Comparable
     public String getName()
     {
         String s = "";
-        if(isSubObject) s = "." + Integer.toString(subIndex, 16);
+        if(isSubObject()) s = "." + Integer.toString(subIndex, 16);
         return Integer.toString(index, 16) + s + " - " + parameterName;
     }
 
@@ -104,11 +146,44 @@ public class ODNode implements EdsTreeNode, Comparable
             Field f = fields[ix + attrOffset];
             if(f.getName().equalsIgnoreCase("accessType")) {
                 String ret = "";
-                if((accessType & ACCES_TYPE_READ) != 0) ret += "r";
-                if((accessType & ACCES_TYPE_WRITE) != 0) ret += "w";
+                if(accessType == ACCES_TYPE_RW) ret = "rw";
+                else if(accessType == ACCES_TYPE_WO) ret = "wo";
+                else if(accessType == ACCES_TYPE_RO) ret = "ro";
+                else if(accessType == ACCES_TYPE_RWR) ret = "rwr";
+                else if(accessType == ACCES_TYPE_RWW) ret = "rww";
+                else if(accessType == ACCES_TYPE_CONST) ret = "const";
                 return ret;
             }
             return f.get(this).toString();
+        } catch (Exception e) {}
+        return "Exception occured getting attribute " + fields[ix + attrOffset].getName();
+    }
+
+    public String getAttrDescription(int ix)
+    {
+        if(fields == null) return "<NULL>";
+        if(ix >= getAttrCnt()) return "index " + ix + " is out of range (" + getAttrCnt() + ")";
+        try {
+            String ret = "";
+            Field f = fields[ix + attrOffset];
+            if(f.getName().equalsIgnoreCase("ObjectType")) {
+                int n = new Integer(f.get(this).toString()).intValue();
+                return objectTypeNames[n];
+            }
+            if(f.getName().equalsIgnoreCase("DataType")) {
+                int n = new Integer(f.get(this).toString()).intValue();
+                return dataTypeDefs[n].name + " (" + dataTypeDefs[n].len + ")";
+            }
+            if(f.getName().equalsIgnoreCase("AccessType")) {
+                if(accessType == ACCES_TYPE_RW) ret = "READ/WRITE";
+                else if(accessType == ACCES_TYPE_WO) ret = "WRITE ONLY";
+                else if(accessType == ACCES_TYPE_RO) ret = "READ ONLY";
+                else if(accessType == ACCES_TYPE_RWR) ret = "RW on process input";
+                else if(accessType == ACCES_TYPE_RWW) ret = "RW on process output";
+                else if(accessType == ACCES_TYPE_CONST) ret = "CONST";
+                return ret;
+            }
+            return "";
         } catch (Exception e) {}
         return "Exception occured getting attribute " + fields[ix + attrOffset].getName();
     }
@@ -136,8 +211,12 @@ public class ODNode implements EdsTreeNode, Comparable
         else if(name.equalsIgnoreCase("accessType")) {
             accessType = 0;
             val = val.toLowerCase();
-            if(val.indexOf("r") >= 0) accessType |= ACCES_TYPE_READ;
-            if(val.indexOf("w") >= 0) accessType |= ACCES_TYPE_WRITE;
+            if(val.equalsIgnoreCase("rw")) accessType = ACCES_TYPE_RW;
+            else if(val.equalsIgnoreCase("ro")) accessType = ACCES_TYPE_RO;
+            else if(val.equalsIgnoreCase("wo")) accessType = ACCES_TYPE_WO;
+            else if(val.equalsIgnoreCase("rwr")) accessType = ACCES_TYPE_RWR;
+            else if(val.equalsIgnoreCase("rww")) accessType = ACCES_TYPE_RWW;
+            else if(val.equalsIgnoreCase("const")) accessType = ACCES_TYPE_CONST;
         }
         else if(name.equalsIgnoreCase("pdoMapping")) {
             pdoMapping = (FString.toInt(val) == 0)? false: true;
@@ -207,6 +286,7 @@ public class ODNode implements EdsTreeNode, Comparable
         ODNode on = (ODNode) o;
         if(index < on.index) return -1;
         if(index > on.index) return 1;
+        if(!isSubObject()) return 0;
         if(subIndex < on.subIndex) return -1;
         if(subIndex > on.subIndex) return 1;
         return 0;

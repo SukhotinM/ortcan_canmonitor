@@ -1,16 +1,12 @@
 #!/bin/sh
 
+CANMON_DIR=`dirname $0`
+
 #$JAVA_HOME/bin/java -classpath class:$JAVA_HOME/jre/lib/charsets.jar:$JAVA_HOME/jre/lib/rt.jar:$JAVA_HOME/jre/lib/javaplugin.jar:$JAVA_HOME/jre/lib/jce.jar:$JAVA_HOME/jre/lib/jsse.jar:$JAVA_HOME/jre/lib/sunrsasign.jar:$JAVA_HOME/jre/lib/ext/localedata.jar:$JAVA_HOME/jre/lib/ext/dnsns.jar:$JAVA_HOME/jre/lib/ext/ldapsec.jar:$JAVA_HOME/jre/lib/ext/sunjce_provider.jar ocera.rtcan.monitor.CanMonitor
 
 if [ -z "$JAVA_HOME" ] ; then
   export JAVA_HOME=/opt/java
 fi
 
-# uncomment this if you does not use jar
-#MONITOR_DIR=`dirname $0`
-#JAVA_CLASSES=$MONITOR_DIR/lib/jdom.jar:$JAVA_HOME/jre/lib/charsets.jar:$JAVA_HOME/jre/lib/rt.jar:$JAVA_HOME/jre/lib/javaplugin.jar:$JAVA_HOME/jre/lib/jce.jar:$JAVA_HOME/jre/lib/jsse.jar:$JAVA_HOME/jre/lib/sunrsasign.jar:$JAVA_HOME/jre/lib/ext/localedata.jar:$JAVA_HOME/jre/lib/ext/dnsns.jar:$JAVA_HOME/jre/lib/ext/ldapsec.jar:$JAVA_HOME/jre/lib/ext/sunjce_provider.jar
-#$JAVA_HOME/bin/java -classpath $MONITOR_DIR/class:$JAVA_CLASSES ocera.rtcan.monitor.CanMonitor $@
-
-# comment this if you does not use jar
-#$JAVA_HOME/bin/java -cp lib/jdom.jar:lib/canmonitor.jar ocera.rtcan.monitor.CanMonitor $@
-$JAVA_HOME/bin/java -jar lib/canmonitor.jar $@
+$JAVA_HOME/bin/java -jar $CANMON_DIR/lib/canmonitor.jar $@
+#$JAVA_HOME/bin/java -cp lib/jdom.jar:class ocera/rtcan/monitor/CanMonitor $@

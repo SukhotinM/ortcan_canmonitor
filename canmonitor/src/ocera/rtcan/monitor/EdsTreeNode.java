@@ -14,6 +14,7 @@ public interface EdsTreeNode
     int getAttrCnt();
     String getAttrName(int ix);
     String getAttrValue(int ix);
+    String getAttrDescription(int ix);
     //void setAttrName(int ix, String s);
     void setAttrValue(int ix, String s);
 }

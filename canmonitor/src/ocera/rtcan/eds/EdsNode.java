@@ -13,7 +13,7 @@ import ocera.util.*;
 import ocera.rtcan.monitor.EdsTreeNode;
 
 /**
- * Represents EDS nodes, not included in OD
+ * Represents EDS entry, not inserted in OD
  */
 public class EdsNode implements EdsTreeNode
 {
@@ -60,6 +60,11 @@ public class EdsNode implements EdsTreeNode
     {
         if(ix >= getAttrCnt()) return "<NULL>";
         return attributes[ix].value;
+    }
+
+    public String getAttrDescription(int ix)
+    {
+        return "";
     }
 
 //    public void setAttrName(int ix, String s)
