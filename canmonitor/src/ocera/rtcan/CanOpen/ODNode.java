@@ -6,14 +6,14 @@ import ocera.util.FString;
 import java.lang.reflect.Field;
 
 /**
- * Created by IntelliJ IDEA.
- * User: fanda
- * Date: 30.3.2003
- * Time: 14:42:26
- * To change this template use Options | File Templates.
+ * Represent EDS node included in OD (almost all see EdsNode)
  */
 public class ODNode implements EdsTreeNode, Comparable
 {
+//    public final static int ALONE = 0;
+//    public final static int STRUCT_NODE = 1;
+//    public final static int STRUCT_ITEM = 2;
+
     public final static int ACCES_TYPE_READ = 1;
     public final static int ACCES_TYPE_WRITE = 2;
 
@@ -21,13 +21,16 @@ public class ODNode implements EdsTreeNode, Comparable
 
     public short[] value = null;
 
+    public boolean isSubObject = false; // is it item if struct or array ?
+
+    // this array to know names of next fielt in runtime
     protected static Field[] fields = null;
     protected static int attrOffset; // skip index & subindex
 
     public int index;
     public int subIndex = 0;
     public String parameterName = "";
-    public int subNumber = 0;
+    public int subNumber = 0; // number of subindicies
     public int objectType;
     public int dataType;
     public byte accessType; //bitfield: 1 - read, 2 - write
@@ -63,9 +66,16 @@ public class ODNode implements EdsTreeNode, Comparable
     public String getName()
     {
         String s = "";
-        if(subIndex >= 0) s = "." + Integer.toString(subIndex, 16);
+        if(isSubObject) s = "." + Integer.toString(subIndex, 16);
         return Integer.toString(index, 16) + s + " - " + parameterName;
     }
+
+//    public int getType()
+//    {
+//        if(subNodes != null) return STRUCT_NODE;
+//        if(subObject) return STRUCT_ITEM;
+//        return ALONE;
+//    }
 
     public int getAttrCnt()
     {

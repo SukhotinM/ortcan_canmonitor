@@ -12,6 +12,9 @@ import java.util.*;
 import ocera.util.*;
 import ocera.rtcan.monitor.EdsTreeNode;
 
+/**
+ * Represents EDS nodes, not included in OD
+ */
 public class EdsNode implements EdsTreeNode
 {
     public String caption = "";

@@ -1,7 +1,7 @@
 // based on Copyright 2002 Adam Megacz, see the COPYING file for licensing [GPL]
 package ocera.util;
 
-/** A simple synchronized queue, implemented as an array */
+/** A simple synchronized queue, implemented as an array  */
 public class RoundQueue
 {
     /** The store */

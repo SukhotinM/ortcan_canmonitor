@@ -510,7 +510,10 @@ public class CanMonitor extends JFrame implements Runnable {
                         odnd.subIndex = 0;
                     }
                     else if(index != -1 && subindex != -1) {
+                        //subindex
                         odsubnd = new ODNode();
+                        odsubnd.isSubObject = true;
+//                        odsubnd.type = ODNode.STRUCT_ITEM;
                         odlst.add(odsubnd);
                         //if(tnd != null)
                         //    tnd.add(new DefaultMutableTreeNode(odsubnd));
@@ -554,10 +557,14 @@ public class CanMonitor extends JFrame implements Runnable {
 
             oldix = nd.index;
             tnd = new DefaultMutableTreeNode(nd);
-            if(nd.subNodes != null) for(int j = 0; j < nd.subNodes.length; j++) {
-//                System.err.println("pocet subnodu: " + nd.subNodes.length);
-                ODNode snd = nd.subNodes[j];
-                tnd.add(new DefaultMutableTreeNode(snd));
+            if(nd.subNodes != null) {
+//                nd.type = ODNode.STRUCT_NODE;
+                nd.subIndex = -1;
+                for(int j = 0; j < nd.subNodes.length; j++) {
+    //                System.err.println("pocet subnodu: " + nd.subNodes.length);
+                    ODNode snd = nd.subNodes[j];
+                    tnd.add(new DefaultMutableTreeNode(snd));
+                }
             }
             treeEdsRootNode.add(tnd);
         }
