@@ -346,8 +346,10 @@ public class CanMonitor extends JFrame implements Runnable
 //                {CANDTG 0 0 0 209 [FF]}
                 CANDtgMsg msg = new CANDtgMsg();
                 msg.id = FString.toInt(edCanID.getText());
-                for(int i=0; i<CANDtgMsg.DATA_LEN_MAX; i++) {
-                    msg.data[i] = (byte) FString.toInt(edCanData[i].getText().trim(), 10);
+                for(msg.length=0; msg.length<CANDtgMsg.DATA_LEN_MAX; ) {
+                    String s = edCanData[msg.length].getText().trim();
+                    if(s.length() == 0) break;
+                    msg.data[msg.length++] = (byte) FString.toInt(s, 10);
                 }
                 txtLog.append("SENDING:\t" + msg + "\n");
                 canConn.send(msg);
