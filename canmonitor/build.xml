@@ -47,10 +47,17 @@
             />
     </target>
 
-    <target name="prepare-jar-monitor" depends="clean">
-    </target>
     <!-- Generate the jar file -->
-    <target name="jar-monitor" depends="prepare-jar-monitor, compile-monitor">
+    <target name="jar-monitor" depends="clean, compile-monitor">
+        <!-- jdom library should be a part of canmonitor.jar because
+               java -cp jdom.jar -jar canmonitor.jar
+             doesn't work, I shoul use
+               java -cp jdom.jar:canmonitor.jar ocera.rtcan.monitor.CanMonitor
+             I don't know why, if somebody knows it please sen me an email 'vacek@rtime.felk.cvut.cz'
+             If I include jdom.jar into canmonitor.jar, I can write
+               java -jar canmonitor.jar
+        -->
+        <unjar dest="${class}" src="${lib}/jdom.jar"/>
         <jar jarfile="${lib}/canmonitor.jar" basedir="${class}"
             manifest="${src}/${path.monitor}/manifest">
             <!-- Do not include test files in the runtime jar
@@ -78,16 +85,11 @@
             />
     </target>
 
-    <target name="prepare-jar-xmlconf" depends="clean">
-    </target>
     <!-- Generate the jar file -->
-    <target name="jar-xmlconf" depends="prepare-jar-xmlconf, compile-xmlconf">
+    <target name="jar-xmlconf" depends="clean, compile-xmlconf">
+        <unjar dest="${class}" src="${lib}/jdom.jar"/>
         <jar jarfile="${lib}/xmlconf.jar" basedir="${class}"
             manifest="${src}/${path.xmlconf}/manifest">
-            <!-- Do not include test files in the runtime jar
-            <exclude name="**/Test*.*"/>
-            <exclude name="**/test*.*"/>
-            -->
         </jar>
     </target>
 

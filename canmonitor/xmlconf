@@ -6,4 +6,5 @@ fi
 
 # does anybodu know, why this line does not work? vacek@rtime.felk.cvut.cz
 #$JAVA_HOME/bin/java -classpath lib/jdom.jar -jar lib/xmlconf.jar $@
-$JAVA_HOME/bin/java -classpath lib/jdom.jar:lib/xmlconf.jar ocera.xmlconf.XmlConf $@
+#$JAVA_HOME/bin/java -classpath lib/jdom.jar:lib/xmlconf.jar ocera.xmlconf.XmlConf $@
+$JAVA_HOME/bin/java -jar lib/xmlconf.jar $@

@@ -12,4 +12,5 @@ fi
 #$JAVA_HOME/bin/java -classpath $MONITOR_DIR/class:$JAVA_CLASSES ocera.rtcan.monitor.CanMonitor $@
 
 # comment this if you does not use jar
-$JAVA_HOME/bin/java -cp lib/jdom.jar:lib/canmonitor.jar ocera.rtcan.monitor.CanMonitor $@
+#$JAVA_HOME/bin/java -cp lib/jdom.jar:lib/canmonitor.jar ocera.rtcan.monitor.CanMonitor $@
+$JAVA_HOME/bin/java -jar lib/canmonitor.jar $@
