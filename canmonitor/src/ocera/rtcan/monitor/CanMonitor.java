@@ -88,6 +88,7 @@ public class CanMonitor extends JFrame implements Runnable {
     protected JTable tblProp;
     protected JTextField edCanID;
     protected JTextField[] edCanData = new JTextField[8];
+    protected JButton btSend;
 
     protected JTabbedPane tabPane;
     protected JTree treeEds;
@@ -177,6 +178,7 @@ public class CanMonitor extends JFrame implements Runnable {
     public CanMonitor(String[] cmd_line_args)
     {
         super("RT CAN monitor - Alfa 0.1");
+        initActions();
         initGui();
         init();
         loadConfig();
@@ -247,13 +249,10 @@ public class CanMonitor extends JFrame implements Runnable {
         }
     }
 
-    public void initGui()
+    public void initActions()
     {
-        //==========================================================
-        //        menu toolbar
-        //==========================================================
-        pane = getContentPane();
-        ImageIcon ico = new ImageIcon("img/file_new.gif");
+        URL url = this.getClass().getResource("resources/file-open.png");
+        ImageIcon ico = new ImageIcon(url);
         Action act;
         act = new AbstractAction("Open EDS", ico) {
                     public void actionPerformed(ActionEvent e) {
@@ -282,6 +281,16 @@ public class CanMonitor extends JFrame implements Runnable {
                 };
         actions.put("Config", act);
 
+        act = new AbstractAction("ResetDevice") {
+                    public void actionPerformed(ActionEvent e) {
+                        edCanID.setText("0");
+                        edCanData[0].setText("1");
+                        edCanData[1].setText("0");
+                        btSend.getActionListeners()[0].actionPerformed(null);
+                    }
+                };
+        actions.put("ResetDevice", act);
+
         act = new AbstractAction("Quit") {
                     public void actionPerformed(ActionEvent e) {
                         cleanUp();
@@ -290,6 +299,14 @@ public class CanMonitor extends JFrame implements Runnable {
                     }
                 };
         actions.put("Quit", act);
+    }
+
+    public void initGui()
+    {
+        //==========================================================
+        //        menu toolbar
+        //==========================================================
+        pane = getContentPane();
 
         //==========================================================
         // menu bar
@@ -299,15 +316,15 @@ public class CanMonitor extends JFrame implements Runnable {
 
         JMenu menu = new JMenu("File");
         menuBar.add(menu);
-        JMenuItem itm = new JMenuItem(actions.get("OpenEds"));
-        menu.add(itm);
-        itm = new JMenuItem(actions.get("Quit"));
-        menu.add(itm);
+        JMenuItem itm = new JMenuItem(actions.get("OpenEds")); menu.add(itm);
+        menu.addSeparator();
+        itm = new JMenuItem(actions.get("Quit")); menu.add(itm);
 
         menu = new JMenu("Tools");
         menuBar.add(menu);
-        itm = new JMenuItem(actions.get("Config"));
-        menu.add(itm);
+        itm = new JMenuItem(actions.get("Config")); menu.add(itm);
+        menu.addSeparator();
+        itm = new JMenuItem(actions.get("ResetDevice")); menu.add(itm);
 
         //==========================================================
         // tool bar
@@ -364,7 +381,7 @@ public class CanMonitor extends JFrame implements Runnable {
             edCanData[i] = new JTextField();//            ed.setMinimumSize(50, 0);
             jpan.add(edCanData[i]);
         }
-        JButton btSend = new JButton("Send");
+        btSend = new JButton("Send");
         btSend.setMnemonic(KeyEvent.VK_S);
         jpan.add(btSend);
 
