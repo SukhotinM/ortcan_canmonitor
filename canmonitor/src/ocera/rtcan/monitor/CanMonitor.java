@@ -375,65 +375,6 @@ public class CanMonitor extends JFrame implements Runnable {
         //==========================================================
         //        layout
         //==========================================================
-        /*
-        //---------------- EDS tab -----------------------------
-        //treeEdsRootNode =
-        JScrollPane sc01 = new JScrollPane(treeEds);
-
-        JPanel p1 = new JPanel(new BorderLayout(0, 5));
-        JPanel p2 = new JPanel();
-        p2.setLayout(new BoxLayout(p2, BoxLayout.X_AXIS));
-        edSDO = new JTextField(); p2.add(edSDO);
-        btUploadSDO = new JButton("Upload");
-        btUploadSDO.setMnemonic(KeyEvent.VK_U);
-        p2.add(btUploadSDO);
-        btDownloadSDO = new JButton("Download");
-        btDownloadSDO.setMnemonic(KeyEvent.VK_D);
-        p2.add(btDownloadSDO);
-        p1.add(p2, BorderLayout.NORTH);
-
-        tblProp = new JTable(attrModel);//, new TableColumnModel() {"col1", "col2", "col3"});
-//        tblProp.setCellEditor(new DefaultCellEditor(new JTextField()));  // tohle neni potreba
-        JScrollPane sc02 = new JScrollPane(tblProp);
-        p1.add(sc02, BorderLayout.CENTER);
-
-        JSplitPane panEDS = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, sc01, p1);
-        panEDS.setDividerLocation(300);
-        panEDS.setDividerSize(8);
-
-        //---------------- CAN tab -----------------------------
-        txtMsg = new JTextArea("--------- Can monitor log window -----------");
-        JScrollPane scrlpantxt = new JScrollPane(txtMsg);
-        JPanel jpan = new JPanel(new GridLayout(0, 10));
-//        jpan.setAlignmentX(0);
-//        jpan.setComponentOrientation(new ComponentOrientation());
-        jpan.add(new JLabel("ID"));
-        for(int i = 0; i < 8; i++) jpan.add(new JLabel("byte[" + i + "]"));
-        jpan.add(new JLabel(""));
-
-        edCanID = new JTextField(); //edID.setMinimumSize(new Dimension(70, 10));
-        jpan.add(edCanID);
-        for(int i = 0; i < 8; i++) {
-            edCanData[i] = new JTextField();//            ed.setMinimumSize(50, 0);
-            jpan.add(edCanData[i]);
-        }
-        btSend = new JButton("Send");
-        btSend.setMnemonic(KeyEvent.VK_S);
-        jpan.add(btSend);
-
-        cbxShowRoughMessages = new JCheckBox("Show rough messages");
-        cbxShowRoughMessages.setMnemonic(KeyEvent.VK_S);
-        cbxShowRoughMessages.setSelected(false);
-
-        JPanel panCAN = new JPanel(new BorderLayout());
-        panCAN.add(cbxShowRoughMessages, BorderLayout.NORTH);
-        panCAN.add(scrlpantxt, BorderLayout.CENTER);
-        panCAN.add(jpan, BorderLayout.SOUTH);
-
-        tabPane = new JTabbedPane();
-        tabPane.addTab("EDS", null, panEDS, "Show and edit EDS");
-        tabPane.addTab("CAN", null, panCAN, "Monitor CAN messages");
-        */
         tabPane.setSelectedIndex(1);    // select tab CAN
         pane.add(tabPane, BorderLayout.CENTER);
 
@@ -518,6 +459,7 @@ public class CanMonitor extends JFrame implements Runnable {
                 txtMsg.append("SENDING:\t" + msg + "\n");
                 canConn.send(msg);
                 valueProcessedByDownload = ODNode.string2ValArray2(bytes);
+                //FLog.log("CanMonitor", FLog.LOG_TRASH, "valueProcessedByDownload = " + bytes);
             }
         });
 
@@ -871,8 +813,7 @@ public class CanMonitor extends JFrame implements Runnable {
      * >>> IMPORTANT!! <<<
      * DO NOT edit this method OR call it in your code!
      */
-    private void $$$setupUI$$$()
-    {
+    private void $$$setupUI$$$() {
         final JTabbedPane _1;
         _1 = new JTabbedPane();
         tabPane = _1;

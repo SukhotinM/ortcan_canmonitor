@@ -28,8 +28,7 @@ public class CanMonStatusBar
      * >>> IMPORTANT!! <<<
      * DO NOT edit this method OR call it in your code!
      */
-    private void $$$setupUI$$$()
-    {
+    private void $$$setupUI$$$() {
         final JPanel _1;
         _1 = new JPanel();
         panel = _1;
@@ -76,4 +75,5 @@ public class CanMonStatusBar
         _7.setVerticalAlignment(1);
         _6.add(_7, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, 8, 0, 0, 0, null, null, null));
     }
+
 }
