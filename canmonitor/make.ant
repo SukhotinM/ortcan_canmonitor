@@ -4,7 +4,6 @@ fi
 
 ANT=/opt/ant/bin/ant
 
-mkdir -p class
 $ANT $@
 #$ANT -verbose $@
 
