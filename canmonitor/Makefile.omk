@@ -9,7 +9,7 @@ default_CONFIG = CONFIG_OC_CANMONITOR=n
 
 ifndef ANT
 TRY_ANT=/opt/ant/bin/ant	# Ant is searched here if it isn't found in $PATH
-ANT=$(shell if [ -n "`which ant`" ]; then which ant; else [ -x $(TRY_ANT) ] && echo $(TRY_ANT); fi)
+ANT=$(shell if [ -n "`which ant 2>/dev/null`" ]; then which ant; else [ -x $(TRY_ANT) ] && echo $(TRY_ANT); fi)
 ifeq ($(ANT),)
 
 $(warning You need Ant in order to compile this. If you have it in non-standard \
