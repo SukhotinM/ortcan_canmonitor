@@ -61,7 +61,17 @@
     </target>
 
     <!-- Generate the jar file -->
-    <target name="jar-monitor" depends="clean, compile-monitor">
+    <target name="copy-libs">
+        <mkdir dir="${lib}"/>
+        <!-- Copy the toolbar icons images -->
+        <copy todir="${lib}">
+            <fileset dir="lib" >
+                <include name="*.jar"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="jar-monitor" depends="clean, compile-monitor, copy-libs">
         <!-- <unjar dest="${class}" src="${lib}/jdom.jar"/> -->
         <jar jarfile="${lib}/canmonitor.jar" basedir="${class}"
             manifest="${src}/${path.monitor}/manifest">
@@ -70,6 +80,8 @@
             <exclude name="**/test*.*"/>
             -->
         </jar>
+        <copy todir="${java_lib_dir}" file="canmonitor"/>
+	<chmod file="${java_lib_dir}/canmonitor" perm="a+x"/>
     </target>
 
     <target name="compile-xmlconf" depends="prepare-compile">
@@ -91,7 +103,7 @@
     </target>
 
     <!-- Generate the jar file -->
-    <target name="jar-xmlconf" depends="clean, compile-xmlconf">
+    <target name="jar-xmlconf" depends="clean, compile-xmlconf, copy-libs">
         <!-- <unjar dest="${class}" src="${lib}/jdom.jar"/> -->
         <jar jarfile="${lib}/xmlconf.jar" basedir="${class}"
             manifest="${src}/${path.xmlconf}/manifest">

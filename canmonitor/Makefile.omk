@@ -1,0 +1,23 @@
+#*******************************************************************
+# The ORTCAN Project is distributed under the
+# Library Gnu General Public Licence.
+# See file COPYING for details.
+#
+#*******************************************************************
+
+ifndef ANT
+ANT=/opt/ant/bin/ant
+endif
+
+ifndef JAVA_HOME
+JAVA_HOME=/opt/java
+endif
+
+export JAVA_HOME
+
+.PHONY: canmonitor.jar xmlconf.jar
+
+utils-pass-local: canmonitor.jar xmlconf.jar
+
+xmlconf.jar canmonitor.jar:
+	$(ANT) -Djava_class_dir=$(USER_OBJS_DIR)/ -Djava_lib_dir=$(USER_BIN_DIR)/ -buildfile $(srcdir)/build.xml
