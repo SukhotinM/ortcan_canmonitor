@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<xml>
+    <head>
+        <link role="stringprops" href="/ocera/rtcan/monitor/resources/MenuLabels.properties"/>
+    </head>
+    <body>
+        <menubar>
+                <menu label="File" accel="F">
+                <menuitem action="EdsOpen"/>
+                <menuitem action="EdsClose"/>
+                <separator/>
+                <menuitem action="Connect"/>
+                <menuitem action="Disconnect"/>
+                <separator/>
+                <menuitem action="Quit"/>
+            </menu>
+            <menu label="Tools" accel="T">
+                <menuitem action="Config"/>
+                <separator/>
+                <menuitem action="DeviceReset"/>
+<!--                <menuitem action="DeviceStatePreoperational"/>-->
+            </menu>
+        </menubar>
+    </body>
+</xml>

@@ -155,24 +155,9 @@ public class CanMonClient implements Runnable
         int c;
         while(true) {
             // parse datagram
-
-/*
-            // all ints are in the network endian
-            #define CAN_MSG_LENGTH 8
-            struct canmsg_t {
-                short		flags;
-                int		cob;
-                unsigned long	id;
-                unsigned long	timestamp;
-                unsigned int	length;
-                unsigned char	data[CAN_MSG_LENGTH];
-            } PACKED;
-*/
-
             try {
                 while(true) {
                     c = in.read();
-//                    System.out.print((char)c);
                     if(c == -1) break;  //end of stream
                     if(c == '{') {
                         // datagram start, read datagram to s
