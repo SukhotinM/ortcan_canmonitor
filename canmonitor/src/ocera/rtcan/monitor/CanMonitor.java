@@ -13,6 +13,7 @@ import ocera.rtcan.eds.*;
 import ocera.rtcan.CanMonClient;
 import ocera.rtcan.CanMsg;
 import ocera.rtcan.CanOpen.ODNode;
+import ocera.rtcan.CanOpen.ObjectDictionary;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -80,7 +81,7 @@ public class CanMonitor extends JFrame implements Runnable {
 
     protected Container pane;
     protected ActionMap actions = new ActionMap();
-    protected ODNode[] objectDictionary = null;
+    protected ObjectDictionary objectDictionary = new ObjectDictionary();
 
     protected JPanel panSDOTable;
     protected JTextField edSDO;
@@ -88,6 +89,14 @@ public class CanMonitor extends JFrame implements Runnable {
     protected JButton btDownloadSDO;
     protected JTable tblProp;
     protected JTextField edCanID;
+    protected JTextField edCanData0;
+    protected JTextField  edCanData1;
+    protected JTextField  edCanData2;
+    protected JTextField edCanData3;
+    protected JTextField edCanData4;
+    protected JTextField edCanData5;
+    protected JTextField edCanData6;
+    protected JTextField edCanData7;
     protected JTextField[] edCanData = new JTextField[8];
     protected JButton btSend;
     protected JTextField edNodeID;
@@ -105,9 +114,13 @@ public class CanMonitor extends JFrame implements Runnable {
     //protected String configFile = "N/A";
     protected boolean configChanged = false;
     private ConfigLookup confLookup = new ConfigLookup(".canmonitor", CONFIG_FILE_NAME, this.getClass());
+    //private JTabbedPane panelMain;
+    private CanMonStatusBar statusBar = new CanMonStatusBar();
+    private short[] valueProcessedByDownload = null;
 
     public static void main (String [] args)
     {
+        FLog.logTreshold = FLog.LOG_DEB;
         CanMonitor app = new CanMonitor(args);
         app.setDefaultCloseOperation(EXIT_ON_CLOSE);
         app.setSize(800, 600);
@@ -175,16 +188,28 @@ public class CanMonitor extends JFrame implements Runnable {
             canConn.connect(ip, p);
             txtMsg.append(canConn.getErrMsg() + "\n");
         }
+        refreshForm();
     }
 
     protected void disConnect()
     {
         canConn.disconnect();
+        refreshForm();
     }
 
     public CanMonitor(String[] cmd_line_args)
     {
-        super("RT CAN monitor - Alfa 0.1");
+        super("RT CAN monitor - Beta 0.1");
+
+        edCanData[0] = edCanData0;
+        edCanData[1] = edCanData1;
+        edCanData[2] = edCanData2;
+        edCanData[3] = edCanData3;
+        edCanData[4] = edCanData4;
+        edCanData[5] = edCanData5;
+        edCanData[6] = edCanData6;
+        edCanData[7] = edCanData7;
+
         loadConfig();
         processCmdLine(cmd_line_args);
         initActions();
@@ -202,7 +227,7 @@ public class CanMonitor extends JFrame implements Runnable {
         String conf_file = confLookup.findConfigFile();
         System.out.println("loading config from '" + conf_file + "'");
         if(conf_file != null) xmlConfig.fromURI(conf_file);
-        else System.err.println("ERROR - Configuration file " + CONFIG_FILE_NAME + " not found.");
+        else FLog.log("CanMonitor", FLog.LOG_ERR, "Configuration file " + CONFIG_FILE_NAME + " not found.");
     }
 
     protected void saveConfig()
@@ -210,7 +235,7 @@ public class CanMonitor extends JFrame implements Runnable {
         if(!configChanged) return;
         String conf_file = confLookup.createConfigFile();
         if(conf_file == null) {
-            System.err.println("ERROR - Configuration file " + CONFIG_FILE_NAME + " cann't be written.");
+            FLog.log("CanMonitor", FLog.LOG_ERR, "Configuration file " + CONFIG_FILE_NAME + " cann't be written.");
             return;
         }
 
@@ -253,6 +278,20 @@ public class CanMonitor extends JFrame implements Runnable {
                 };
         actions.put("OpenEds", act);
 
+        act = new AbstractAction("Connect") {
+                    public void actionPerformed(ActionEvent e) {
+                        connect();
+                    }
+                };
+        actions.put("Connect", act);
+
+        act = new AbstractAction("Disconnect") {
+                    public void actionPerformed(ActionEvent e) {
+                        disConnect();
+                    }
+                };
+        actions.put("Disconnect", act);
+
         act = new AbstractAction("Config") {
                     public void actionPerformed(ActionEvent e) {
                         openConfigDialog();
@@ -294,6 +333,9 @@ public class CanMonitor extends JFrame implements Runnable {
         menuBar.add(menu);
         JMenuItem itm = new JMenuItem(actions.get("OpenEds")); menu.add(itm);
         menu.addSeparator();
+        itm = new JMenuItem(actions.get("Connect")); menu.add(itm);
+        itm = new JMenuItem(actions.get("Disconnect")); menu.add(itm);
+        menu.addSeparator();
         itm = new JMenuItem(actions.get("Quit")); menu.add(itm);
 
         menu = new JMenu("Tools");
@@ -309,6 +351,7 @@ public class CanMonitor extends JFrame implements Runnable {
         tb.add(actions.get("OpenEds"));
         //tb.addSeparator();
         //tb.add(new JSeparator(SwingConstants.VERTICAL));
+        /*
         tb.add(new Box.Filler(new Dimension(0, 0), new Dimension(5000, 5), new Dimension(10000, 1000)));
         tb.add(new JLabel("node ID: "));
         tb.addSeparator(new Dimension(2, 0));
@@ -317,18 +360,24 @@ public class CanMonitor extends JFrame implements Runnable {
         //edNodeID.setPreferredSize(new Dimension(10, edNodeID.getPreferredSize().height));
         //edNodeID.setMaximumSize(new Dimension(100, 1000));
         tb.add(edNodeID);
+        */
         pane.add(tb, BorderLayout.NORTH);
 
+        treeEdsModel = new DefaultTreeModel(treeEdsRootNode);
+        //treeEds = new JTree(treeEdsModel);
+        treeEds.setShowsRootHandles(true);
+        treeEds.setModel(treeEdsModel);
+
+        tblProp.setModel(attrModel);
+
+        edNodeID.setText(xmlConfig.getValue("/canopen/node", "1"));
 
         //==========================================================
         //        layout
         //==========================================================
-
+        /*
         //---------------- EDS tab -----------------------------
         //treeEdsRootNode =
-        treeEdsModel = new DefaultTreeModel(treeEdsRootNode);
-        treeEds = new JTree(treeEdsModel);
-        treeEds.setShowsRootHandles(true);
         JScrollPane sc01 = new JScrollPane(treeEds);
 
         JPanel p1 = new JPanel(new BorderLayout(0, 5));
@@ -384,10 +433,11 @@ public class CanMonitor extends JFrame implements Runnable {
         tabPane = new JTabbedPane();
         tabPane.addTab("EDS", null, panEDS, "Show and edit EDS");
         tabPane.addTab("CAN", null, panCAN, "Monitor CAN messages");
-
-        pane.add(tabPane);
-
+        */
         tabPane.setSelectedIndex(1);    // select tab CAN
+        pane.add(tabPane, BorderLayout.CENTER);
+
+        pane.add(statusBar.panel, BorderLayout.SOUTH);
         enableControls();
 
         //==========================================================
@@ -463,9 +513,11 @@ public class CanMonitor extends JFrame implements Runnable {
                 msg += node + " ";
                 msg += Integer.toString(selectedObject.index, 16) + " ";
                 msg += Integer.toString(selectedObject.subIndex, 16) + " ";
-                msg += "[" + edSDO.getText() + "]}";
+                String bytes =  edSDO.getText();
+                msg += "[" + bytes + "]}";
                 txtMsg.append("SENDING:\t" + msg + "\n");
                 canConn.send(msg);
+                valueProcessedByDownload = ODNode.string2ValArray2(bytes);
             }
         });
 
@@ -483,6 +535,13 @@ public class CanMonitor extends JFrame implements Runnable {
     {
         if(selectedObject == null) edSDO.setText("");
         else edSDO.setText(selectedObject.valToString());
+
+        if(canConn.getSocket() == null)
+            statusBar.lbl1.setText("disconnected");
+        else
+            statusBar.lbl1.setText(canConn.getSocket().toString());
+        statusBar.lbl2.setText("");
+        statusBar.lbl3.setText("");
     }
 
     private void enableControls()
@@ -608,6 +667,7 @@ public class CanMonitor extends JFrame implements Runnable {
                     if(odnd.index != index) {
                         // close index definition
                         odnd.subNodes = (ODNode[]) subndlist.toArray(new ODNode[subndlist.size()]);
+                        odlst.add(odnd);
                         subndlist = new LinkedList();
                         odnd = null;
                     }
@@ -629,7 +689,6 @@ public class CanMonitor extends JFrame implements Runnable {
                     if(index != -1 && subindex == -1) {
                         //index
                         odnd = new ODNode();
-                        odlst.add(odnd);
                         //tnd = new DefaultMutableTreeNode(odnd);
                         //treeEdsRootNode.add(tnd);
                         odnd.index = index;
@@ -640,7 +699,7 @@ public class CanMonitor extends JFrame implements Runnable {
                         odsubnd = new ODNode();
                         odsubnd.subObject = true;
 //                        odsubnd.type = ODNode.STRUCT_ITEM;
-                        odlst.add(odsubnd);
+                        //odlst.add(odsubnd);
                         //if(tnd != null)
                         //    tnd.add(new DefaultMutableTreeNode(odsubnd));
                         odsubnd.index = index;
@@ -659,6 +718,7 @@ public class CanMonitor extends JFrame implements Runnable {
                     s1 = FString.slice(s, ix + 1).trim();
                     s = FString.slice(s, 0, ix).trim();
                 }
+
                 if(edsnd != null) {
                     EdsAttribute att = new EdsAttribute(s, s1);
                     attlist.add(att);
@@ -672,23 +732,24 @@ public class CanMonitor extends JFrame implements Runnable {
             }
         }
 
-        objectDictionary = (ODNode[]) odlst.toArray(new ODNode[odlst.size()]);
-        Arrays.sort(objectDictionary);
+        ODNode[] odir = (ODNode[])odlst.toArray(new ODNode[odlst.size()]);
+        Arrays.sort(odir);
+        objectDictionary.setOd(odir);
 
         DefaultMutableTreeNode tnd = null;
         // add nodes to the tree
-        int oldix = -1;
-        for(int i = 0; i < objectDictionary.length; i++) {
-            ODNode nd = objectDictionary[i];
-            if(nd.index == oldix) continue;
+        //int oldix = -1;
+        for(int i = 0; i < odir.length; i++) {
+            ODNode nd = odir[i];
+            //if(nd.index == oldix) continue;
 
-            oldix = nd.index;
+            //oldix = nd.index;
             tnd = new DefaultMutableTreeNode(nd);
             if(nd.subNodes != null) {
 //                nd.type = ODNode.STRUCT_NODE;
                 nd.subIndex = -1;
                 for(int j = 0; j < nd.subNodes.length; j++) {
-    //                System.err.println("pocet subnodu: " + nd.subNodes.length);
+    //                FLog.log("CanMonitor", FLog.LOG_ERR, "pocet subnodu: " + nd.subNodes.length);
                     ODNode snd = nd.subNodes[j];
                     tnd.add(new DefaultMutableTreeNode(snd));
                 }
@@ -711,7 +772,7 @@ public class CanMonitor extends JFrame implements Runnable {
         while(true) {
             String s = (String)canConn.readQueue.remove(RoundQueue.NO_BLOCKING);
             if(s == null) break;
-            System.out.println("CAN_MONITOR: received CAN message " + s);
+            FLog.log("CanMonitor", FLog.LOG_DEB, "received CAN message " + s);
             msgCount++;
 
             // parse datagram
@@ -750,8 +811,11 @@ public class CanMonitor extends JFrame implements Runnable {
                 boolean upload = false;
                 txtMsg.append("RECEIVE[" + msgCount + "]:\t" + s + "\n");
                 s = s.substring(5).trim();
-                if(s.matches("UPLOAD.*")) {s = s.substring(7); upload = true;}
+                if(s.matches("UPLOAD.*")) {
+                    s = s.substring(7); upload = true;
+                }
                 else if(s.matches("DOWNLOAD.*")) s = s.substring(9);
+
                 ss = StringParser.cutInt(s, 16); s = ss[1]; //server_port
                 ss = StringParser.cutInt(s, 16); s = ss[1]; //client_port
                 ss = StringParser.cutInt(s, 16); s = ss[1]; //node
@@ -771,36 +835,234 @@ public class CanMonitor extends JFrame implements Runnable {
                     if(upload) {
                         if(s.charAt(0) == '[') {
                             s = FString.slice(s, 1, -1);
-                            LinkedList lst = new LinkedList();
-                            while(true) {
-                                ss = StringParser.cutInt(s, 16); s = ss[1];
-                                if(ss[0].trim().length() == 0) break;
-                                lst.add(new Short((short) FString.toInt(ss[0], 16)));
-                            }
-                            value = new short[lst.size()];
-                            int ix = 0;
-                            for(Iterator it = lst.iterator(); it.hasNext();) {
-                                Short sh = (Short) it.next();
-                                value[ix++] = sh.shortValue();
-                            }
+                            value = ODNode.string2ValArray2(s);
                         }
-
-                        // find object
-                        ODNode odkey = new ODNode();
-                        odkey.index = index;
-                        odkey.subIndex = subindex;
-                        int ix = Arrays.binarySearch(objectDictionary, odkey);
-                        if(ix >= 0) {
-                            objectDictionary[ix].value = value;
-                            refreshForm();
+                        else {
+                            value = new short[0];
+                        }
+                        objectDictionary.setValue(index, subindex, value);
+                        refreshForm();
+                    }
+                    else {
+                        // succesful download, store new value aloso to OD
+                        if(valueProcessedByDownload != null) {
+                            objectDictionary.setValue(index, subindex, valueProcessedByDownload);
                         }
                     }
                 }
             }
             else {
-                System.err.println("unknown message type: " + s);
+                FLog.logcont(FLog.LOG_DEB, "unknown message type: " + s);
             }
+            valueProcessedByDownload = null;
+            refreshForm();
         }
+    }
+
+    {
+// GUI initializer generated by IntelliJ IDEA GUI Designer
+// >>> IMPORTANT!! <<<
+// DO NOT EDIT OR ADD ANY CODE HERE!
+        $$$setupUI$$$();
+    }
+
+    /**
+     * Method generated by IntelliJ IDEA GUI Designer
+     * >>> IMPORTANT!! <<<
+     * DO NOT edit this method OR call it in your code!
+     */
+    private void $$$setupUI$$$()
+    {
+        final JTabbedPane _1;
+        _1 = new JTabbedPane();
+        tabPane = _1;
+        final JPanel _2;
+        _2 = new JPanel();
+        _2.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
+        _1.addTab("EDS", _2);
+        final JSplitPane _3;
+        _3 = new JSplitPane();
+        _3.setDividerSize(8);
+        _3.setDividerLocation(164);
+        _2.add(_3, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, 0, 3, 3, 3, null, new Dimension(200, 200), null));
+        final JPanel _4;
+        _4 = new JPanel();
+        _4.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
+        _3.setRightComponent(_4);
+        final JPanel _5;
+        _5 = new JPanel();
+        _5.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
+        _4.add(_5, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, 0, 3, 3, 3, null, null, null));
+        final JPanel _6;
+        _6 = new JPanel();
+        _6.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(1, 6, new Insets(2, 3, 0, 3), 5, -1));
+        _5.add(_6, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, 0, 3, 3, 3, null, null, null));
+        final JTextField _7;
+        _7 = new JTextField();
+        edSDO = _7;
+        _6.add(_7, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, 8, 1, 6, 6, null, null, null));
+        final JButton _8;
+        _8 = new JButton();
+        btUploadSDO = _8;
+        _8.setMargin(new Insets(2, 5, 2, 5));
+        _8.setText("Upload");
+        _8.setMnemonic(85);
+        _8.setDisplayedMnemonicIndex(0);
+        _6.add(_8, new com.intellij.uiDesigner.core.GridConstraints(0, 1, 1, 1, 0, 1, 3, 0, null, null, null));
+        final JButton _9;
+        _9 = new JButton();
+        btDownloadSDO = _9;
+        _9.setMargin(new Insets(2, 5, 2, 5));
+        _9.setText("Download");
+        _9.setMnemonic(68);
+        _9.setDisplayedMnemonicIndex(0);
+        _6.add(_9, new com.intellij.uiDesigner.core.GridConstraints(0, 2, 1, 1, 0, 1, 3, 0, null, null, null));
+        final JLabel _10;
+        _10 = new JLabel();
+        _10.setText("node");
+        _6.add(_10, new com.intellij.uiDesigner.core.GridConstraints(0, 4, 1, 1, 8, 0, 0, 0, null, null, null));
+        final JTextField _11;
+        _11 = new JTextField();
+        edNodeID = _11;
+        _6.add(_11, new com.intellij.uiDesigner.core.GridConstraints(0, 5, 1, 1, 8, 1, 0, 0, null, new Dimension(20, -1), null));
+        final com.intellij.uiDesigner.core.Spacer _12;
+        _12 = new com.intellij.uiDesigner.core.Spacer();
+        _6.add(_12, new com.intellij.uiDesigner.core.GridConstraints(0, 3, 1, 1, 0, 1, 0, 1, null, new Dimension(30, -1), null));
+        final JScrollPane _13;
+        _13 = new JScrollPane();
+        _5.add(_13, new com.intellij.uiDesigner.core.GridConstraints(1, 0, 1, 1, 0, 3, 7, 7, null, null, null));
+        final JTable _14;
+        _14 = new JTable();
+        tblProp = _14;
+        _13.setViewportView(_14);
+        final JScrollPane _15;
+        _15 = new JScrollPane();
+        _3.setLeftComponent(_15);
+        final JTree _16;
+        _16 = new JTree();
+        treeEds = _16;
+        _15.setViewportView(_16);
+        final JPanel _17;
+        _17 = new JPanel();
+        _17.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(1, 1, new Insets(0, 5, 3, 5), -1, -1));
+        _1.addTab("CAN", _17);
+        final JPanel _18;
+        _18 = new JPanel();
+        _18.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(3, 1, new Insets(0, 0, 0, 0), -1, -1));
+        _17.add(_18, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, 0, 3, 3, 3, null, null, null));
+        final JCheckBox _19;
+        _19 = new JCheckBox();
+        cbxShowRoughMessages = _19;
+        _19.setText("Show rough messages");
+        _19.setMnemonic(83);
+        _19.setDisplayedMnemonicIndex(0);
+        _18.add(_19, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, 8, 0, 3, 0, null, null, null));
+        final JScrollPane _20;
+        _20 = new JScrollPane();
+        _18.add(_20, new com.intellij.uiDesigner.core.GridConstraints(1, 0, 1, 1, 0, 3, 7, 7, null, null, null));
+        final JTextArea _21;
+        _21 = new JTextArea();
+        txtMsg = _21;
+        _20.setViewportView(_21);
+        final JPanel _22;
+        _22 = new JPanel();
+        _22.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
+        _18.add(_22, new com.intellij.uiDesigner.core.GridConstraints(2, 0, 1, 1, 0, 3, 3, 3, null, null, null));
+        final JPanel _23;
+        _23 = new JPanel();
+        _23.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(2, 10, new Insets(0, 0, 0, 0), 5, 0));
+        _22.add(_23, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, 0, 3, 0, 0, null, null, null));
+        final JTextField _24;
+        _24 = new JTextField();
+        edCanID = _24;
+        _23.add(_24, new com.intellij.uiDesigner.core.GridConstraints(1, 0, 1, 1, 8, 1, 6, 6, new Dimension(50, -1), null, null));
+        final JTextField _25;
+        _25 = new JTextField();
+        edCanData0 = _25;
+        _23.add(_25, new com.intellij.uiDesigner.core.GridConstraints(1, 1, 1, 1, 0, 1, 6, 0, null, null, null));
+        final JTextField _26;
+        _26 = new JTextField();
+        edCanData4 = _26;
+        _23.add(_26, new com.intellij.uiDesigner.core.GridConstraints(1, 5, 1, 1, 8, 1, 6, 0, null, null, null));
+        final JTextField _27;
+        _27 = new JTextField();
+        edCanData6 = _27;
+        _23.add(_27, new com.intellij.uiDesigner.core.GridConstraints(1, 7, 1, 1, 8, 1, 6, 0, null, null, null));
+        final JLabel _28;
+        _28 = new JLabel();
+        _28.setText("ID");
+        _28.setIconTextGap(0);
+        _23.add(_28, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, 8, 0, 0, 0, null, null, null));
+        final JLabel _29;
+        _29 = new JLabel();
+        _29.setText("byte[0]");
+        _29.setIconTextGap(0);
+        _23.add(_29, new com.intellij.uiDesigner.core.GridConstraints(0, 1, 1, 1, 8, 0, 0, 0, null, null, null));
+        final JLabel _30;
+        _30 = new JLabel();
+        _30.setText("byte[4]");
+        _30.setIconTextGap(0);
+        _23.add(_30, new com.intellij.uiDesigner.core.GridConstraints(0, 5, 1, 1, 8, 0, 0, 0, null, null, null));
+        final JLabel _31;
+        _31 = new JLabel();
+        _31.setText("byte[6]");
+        _31.setIconTextGap(0);
+        _23.add(_31, new com.intellij.uiDesigner.core.GridConstraints(0, 7, 1, 1, 8, 0, 0, 0, null, null, null));
+        final JLabel _32;
+        _32 = new JLabel();
+        _32.setText("byte[2]");
+        _32.setIconTextGap(0);
+        _23.add(_32, new com.intellij.uiDesigner.core.GridConstraints(0, 3, 1, 1, 8, 0, 0, 0, null, null, null));
+        final JTextField _33;
+        _33 = new JTextField();
+        edCanData2 = _33;
+        _23.add(_33, new com.intellij.uiDesigner.core.GridConstraints(1, 3, 1, 1, 8, 1, 6, 0, null, null, null));
+        final JLabel _34;
+        _34 = new JLabel();
+        _34.setText("byte[1]");
+        _34.setIconTextGap(0);
+        _23.add(_34, new com.intellij.uiDesigner.core.GridConstraints(0, 2, 1, 1, 8, 0, 0, 0, null, null, null));
+        final JLabel _35;
+        _35 = new JLabel();
+        _35.setText("byte[3]");
+        _35.setIconTextGap(0);
+        _23.add(_35, new com.intellij.uiDesigner.core.GridConstraints(0, 4, 1, 1, 8, 0, 0, 0, null, null, null));
+        final JLabel _36;
+        _36 = new JLabel();
+        _36.setText("byte[5]");
+        _36.setIconTextGap(0);
+        _23.add(_36, new com.intellij.uiDesigner.core.GridConstraints(0, 6, 1, 1, 8, 0, 0, 0, null, null, null));
+        final JLabel _37;
+        _37 = new JLabel();
+        _37.setText("byte[7]");
+        _37.setIconTextGap(0);
+        _23.add(_37, new com.intellij.uiDesigner.core.GridConstraints(0, 8, 1, 1, 8, 0, 0, 0, null, null, null));
+        final JTextField _38;
+        _38 = new JTextField();
+        edCanData1 = _38;
+        _23.add(_38, new com.intellij.uiDesigner.core.GridConstraints(1, 2, 1, 1, 8, 1, 6, 0, null, null, null));
+        final JTextField _39;
+        _39 = new JTextField();
+        edCanData3 = _39;
+        _23.add(_39, new com.intellij.uiDesigner.core.GridConstraints(1, 4, 1, 1, 8, 1, 6, 0, null, null, null));
+        final JTextField _40;
+        _40 = new JTextField();
+        edCanData5 = _40;
+        _23.add(_40, new com.intellij.uiDesigner.core.GridConstraints(1, 6, 1, 1, 8, 1, 6, 0, null, null, null));
+        final JTextField _41;
+        _41 = new JTextField();
+        edCanData7 = _41;
+        _23.add(_41, new com.intellij.uiDesigner.core.GridConstraints(1, 8, 1, 1, 8, 1, 6, 0, null, null, null));
+        final JButton _42;
+        _42 = new JButton();
+        btSend = _42;
+        _42.setText("Send");
+        _42.setMnemonic(83);
+        _42.setDisplayedMnemonicIndex(0);
+        _23.add(_42, new com.intellij.uiDesigner.core.GridConstraints(1, 9, 1, 1, 0, 1, 3, 0, null, null, null));
+        final com.intellij.uiDesigner.core.Spacer _43;
+        _43 = new com.intellij.uiDesigner.core.Spacer();
+        _22.add(_43, new com.intellij.uiDesigner.core.GridConstraints(0, 1, 1, 1, 0, 1, 6, 1, null, null, null));
     }
 
 }

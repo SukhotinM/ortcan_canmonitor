@@ -7,6 +7,7 @@
     <property name="class" location="${java_class_dir}class"/>
     <property name="lib"  location="${java_lib_dir}lib"/>
     <property name="jar.jdom"  location="lib/jdom.jar"/>
+    <property name="jar.ui"  location="lib/ui.jar"/>
     <property name="path.monitor" value="ocera/rtcan/monitor"/>
     <property name="path.xmlconf" value="ocera/xmlconf"/>
 
@@ -53,7 +54,7 @@
             </fileset>
         </copy>
         <javac srcdir="${src}" destdir="${class}"
-            classpath="${jar.jdom}"
+            classpath="${jar.jdom}:${jar.ui}"
             debug="true"
             optimize="false"
             includes="${path.monitor}/CanMonitor.java"
@@ -119,7 +120,7 @@
             <fileset dir="${class}" includes="**/*.class" defaultexcludes="no"/>
         </delete>
         <delete quiet="true">
-            <fileset dir="${lib}" includes="*.jar" excludes="jdom*" defaultexcludes="no"/>
+            <fileset dir="${lib}" includes="*.jar" excludes="jdom*, ui.jar" defaultexcludes="no"/>
         </delete>
     </target>
 

@@ -1,5 +1,5 @@
 Manifest-Version: 1.0
-Class-Path: jdom.jar
+Class-Path: jdom.jar ui.jar
 Main-Class: ocera.rtcan.monitor.CanMonitor
 
 

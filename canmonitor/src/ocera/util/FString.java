@@ -77,6 +77,11 @@ public class FString
         return Integer.toString( ( val & 0xff ) + 0x100, 16 /* radix */ ) .substring( 1 );
     }
 
+    public static String int2Hex(int val)
+    {
+        return Integer.toString(val, 16);
+    }
+
     public static int toInt(String s)
     {
         s = s.trim();

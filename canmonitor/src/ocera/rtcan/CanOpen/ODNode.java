@@ -2,8 +2,10 @@ package ocera.rtcan.CanOpen;
 
 import ocera.rtcan.monitor.EdsTreeNode;
 import ocera.util.FString;
+import ocera.util.StringParser;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 
 class DataTypeDef
 {
@@ -243,13 +245,59 @@ public class ODNode implements EdsTreeNode, Comparable
 
     public String valToString()
     {
-        if(value == null) return "value not loaded";
+        short[] val = getValue();
+        //if(value == null) return "value not loaded";
         String s = "";
-        for(int i = 0; i < value.length; i++) {
+        for(int i = 0; i < val.length; i++) {
             if(i > 0) s += " ";
-            s += FString.byte2Hex(value[i]);
+            s += FString.byte2Hex(val[i]);
         }
         return s;
+    }
+
+    /**
+     * convert '0xdddddddd' to short[], 0xddddd is hexadecimal number, msb is first in returned array
+     */
+    public static short[] string2ValArray(String s)
+    {
+        String s1 = FString.slice(s, 2); // cut 0x
+        ArrayList al = new ArrayList(8);
+        while(s1.length() > 0) {
+            String s2 = FString.slice(s1, -2);
+            s1 = FString.slice(s1, 0, -2);
+            int i = FString.toInt(s2, 16);
+            al.add(new Integer(i));
+        }
+        short[] ret = new short[al.size()];
+        for (int i = 0; i < ret.length; i++) {
+            ret[i] = ((Integer)al.get(i)).shortValue();
+        }
+        return ret;
+    }
+
+    /**
+     * convert 'nn nn nn nn nn' to short[], nn are hexadecimal numbers
+     */
+    public static short[] string2ValArray2(String s)
+    {
+        ArrayList lst = new ArrayList(8);
+        String ss[];
+        while(true) {
+            ss = StringParser.cutInt(s, 16); s = ss[1];
+            if(ss[0].trim().length() == 0) break;
+            lst.add(new Short((short) FString.toInt(ss[0], 16)));
+        }
+        short[] ret = new short[lst.size()];
+        for (int i = 0; i < ret.length; i++) {
+            ret[i] = ((Short)lst.get(i)).shortValue();
+        }
+        return ret;
+    }
+
+    public short[] getValue()
+    {
+        if(value == null) value = string2ValArray(defaultValue);
+        return value;
     }
 
     /**
@@ -293,11 +341,17 @@ public class ODNode implements EdsTreeNode, Comparable
     public int compareTo(Object o)
     {
         ODNode on = (ODNode) o;
+        // objests with same indexes are equal
+        if(index < on.index) return -1;
+        if(index > on.index) return 1;
+        return 0;
+        /*
         if(index < on.index) return -1;
         if(index > on.index) return 1;
         if(!isSubObject() && subObjectCnt() == 0) return 0;
         if(subIndex < on.subIndex) return -1;
         if(subIndex > on.subIndex) return 1;
         return 0;
+        */
     }
 }

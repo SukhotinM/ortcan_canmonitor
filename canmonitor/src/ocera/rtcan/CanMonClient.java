@@ -59,7 +59,7 @@ public class CanMonClient implements Runnable
         out = null;
         errMsg = "OK";
         if(canSocket != null) {
-            System.out.println("disconnecting from " + canSocket.getInetAddress());
+            FLog.log("CanMonitor", FLog.LOG_INF,  "disconnecting from " + canSocket.getInetAddress());
             try {
                 canSocket.close();
             } catch(IOException e) {
@@ -67,9 +67,13 @@ public class CanMonClient implements Runnable
                 errMsg = "Failed to disconnect from server.";
             }
             canSocket = null;
-            System.out.println(errMsg);
+            FLog.log("CanMonitor", FLog.LOG_INF,  errMsg);
         }
         return ret;
+    }
+
+    public Socket getSocket() {
+        return canSocket;
     }
 
     /**
@@ -88,13 +92,14 @@ public class CanMonClient implements Runnable
         errMsg = "";
         try {
             InetAddress addr = InetAddress.getByName(ip);
-            System.out.println("connecting to " + addr);
+            FLog.log("CanMonitor", FLog.LOG_INF,  "connecting to " + addr);
             try {
                 if(port == 0) port = DEFAULT_PORT;
                 canSocket = new Socket(addr, port);
                 errMsg = "connected OK";
                 in = new BufferedInputStream(canSocket.getInputStream());
                 out = new BufferedOutputStream(canSocket.getOutputStream());
+                ret = 0;
 
                 // launch read thread
                 readThread = new Thread(this);
@@ -107,8 +112,12 @@ public class CanMonClient implements Runnable
         } catch(UnknownHostException e) {
             errMsg = "ERROR: unknown host.";
         }
-        System.out.println(errMsg);
+        FLog.log("CanMonitor", FLog.LOG_INF,  errMsg);
         return ret;
+    }
+
+    public boolean connected() {
+        return getSocket() != null;
     }
 
     /**
@@ -131,7 +140,7 @@ public class CanMonClient implements Runnable
             ret = msg.length();
         } catch(IOException e) {
             errMsg = "ERROR: unsuccesfull write to the socket";
-            System.out.println(errMsg);
+            FLog.log("CanMonitor", FLog.LOG_INF,  errMsg);
         }
         return ret;
     }
@@ -173,7 +182,7 @@ public class CanMonClient implements Runnable
                             s += (char) c;
                             if(c == '}') break;
                         }
-                        System.out.println("data from socked received: " + s);
+                        FLog.log("CanMonitor", FLog.LOG_INF,  "data from socked received: " + s);
 
                         if(guiUpdate != null) {
                             // send msg to the monitor msg queue
@@ -184,12 +193,12 @@ public class CanMonClient implements Runnable
                     }
                 }
             } catch(IOException e) {
-                System.err.println("canmond socket read error - " + e);
-//                System.out.println("cause: " + e.getCause());
+                FLog.log("CanMonitor", FLog.LOG_ERR, "canmond socket read error - " + e);
+//                FLog.log("CanMonitor", FLog.LOG_INF,  "cause: " + e.getCause());
                 break;
             }
         }
-        System.out.println("");
+        //FLog.log("CanMonitor", FLog.LOG_INF,  "");
     }
 }
 
