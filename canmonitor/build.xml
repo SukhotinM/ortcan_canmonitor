@@ -72,7 +72,7 @@
         </copy>
     </target>
 
-    <target name="jar-monitor" depends="clean, compile-monitor, copy-libs">
+    <target name="jar-monitor" depends="compile-monitor, copy-libs">
         <!-- <unjar dest="${class}" src="${lib}/jdom.jar"/> -->
         <jar jarfile="${lib}/canmonitor.jar" basedir="${class}"
             manifest="${src}/${path.monitor}/manifest">
@@ -104,7 +104,7 @@
     </target>
 
     <!-- Generate the jar file -->
-    <target name="jar-xmlconf" depends="clean, compile-xmlconf, copy-libs">
+    <target name="jar-xmlconf" depends="compile-xmlconf, copy-libs">
         <!-- <unjar dest="${class}" src="${lib}/jdom.jar"/> -->
         <jar jarfile="${lib}/xmlconf.jar" basedir="${class}"
             manifest="${src}/${path.xmlconf}/manifest">
