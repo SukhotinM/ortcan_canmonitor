@@ -13,6 +13,9 @@ import ocera.util.xmlconfig.XmlConfig;
 
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowAdapter;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
+import java.awt.*;
 
 public class ConfigDialog extends JDialog
 {
@@ -23,7 +26,24 @@ public class ConfigDialog extends JDialog
         xcPanel = new XmlConfPanel();
         if(xconf == null) throw new NullPointerException("XML cofig is NULL");
         xcPanel.setConfig(xconf);
-        getContentPane().add(xcPanel);
+        Container c = getContentPane();
+        c.setLayout(new BorderLayout());
+        c.add(xcPanel, BorderLayout.CENTER);
+        JButton btExit = new JButton("Save & Exit");
+        btExit.setAlignmentX(1);
+        JPanel p = new JPanel();
+        p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
+        p.add(btExit);
+        c.add(p, BorderLayout.SOUTH);
+
+        btExit.addActionListener(new ActionListener()
+        {
+            public void actionPerformed(ActionEvent e)
+            {
+                xcPanel.saveEditedField();
+                dispose();
+            }
+        });
 
         // this makes me the oportunity to save currently edited field before closing dialog
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE );

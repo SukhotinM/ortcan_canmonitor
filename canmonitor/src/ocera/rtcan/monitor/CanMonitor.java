@@ -74,11 +74,8 @@ class AttrModel extends AbstractTableModel
 public class CanMonitor extends JFrame implements Runnable {
 
     protected CanMonClient canConn = new CanMonClient();
-//    protected String serverAddr = "localhost";
     protected ODNode selectedObject = null;
-    protected int nodeNo = 1;  // number of the node to communicate with
-
-    //String canProxyIP = "localhost";
+    //protected int nodeNo = 1;  // number of the node to communicate with
 
     protected Container pane;
     protected ActionMap actions = new ActionMap();
@@ -139,7 +136,10 @@ public class CanMonitor extends JFrame implements Runnable {
                 if(c == 'n') {
                     // node
                     i++;
-                    if(i < args.length) nodeNo = FString.toInt(args[i]);
+                    if(i < args.length) {
+                        xmlConfig.getRootElement().cd("/canopen/node").setValue(args[i]);
+                        //nodeNo = FString.toInt(args[i]);
+                    }
                 }
                 else if(c == 'f') {
                     // EDS file name
@@ -286,7 +286,7 @@ public class CanMonitor extends JFrame implements Runnable {
                     public void actionPerformed(ActionEvent e) {
                         cleanUp();
                         System.gc();
-//                        System.exit(0);
+                        System.exit(0);
                     }
                 };
         actions.put("Quit", act);
@@ -436,7 +436,8 @@ public class CanMonitor extends JFrame implements Runnable {
             public void actionPerformed(ActionEvent e) {
                 String s = Integer.toString(selectedObject.index, 16);
                 s += " " + Integer.toString(selectedObject.subIndex, 16);
-                String msg = "{SDOR UPLOAD 0 0 " + nodeNo + " " + s + "}";
+                String node = xmlConfig.getValue("/canopen/node", "1");
+                String msg = "{SDOR UPLOAD 0 0 " + node + " " + s + "}";
                 txtMsg.append("\nSENDING: " + msg);
                 canConn.send(msg);
             }
@@ -448,8 +449,9 @@ public class CanMonitor extends JFrame implements Runnable {
         // {SDOR DOWNLOAD server_port client_port node index subindex [dd dd ...]}
         btDownloadSDO.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
+                String node = xmlConfig.getValue("/canopen/node", "1");
                 String msg = "{SDOR DOWNLOAD 0 0 ";
-                msg += nodeNo + " ";
+                msg += node + " ";
                 msg += Integer.toString(selectedObject.index, 16) + " ";
                 msg += Integer.toString(selectedObject.subIndex, 16) + " ";
                 msg += "[" + edSDO.getText() + "]}";

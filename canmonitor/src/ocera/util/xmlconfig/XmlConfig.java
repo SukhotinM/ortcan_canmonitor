@@ -79,6 +79,23 @@ public class XmlConfig
         return el.getRootElement();
     }
 
+    /**
+     *
+     * @param path path to desired element
+     * @param defval value to return if anything fails
+     * @return If the path is valid returns value attribut of element on this path<br>
+     *         else returns defval
+     * @see XmlConfElement#cd(String path)
+     */
+    public String getValue(String path, String defval)
+    {
+        XmlConfElement el = getRootElement();
+        if(el == null) return defval;
+        el = el.cd(path);
+        if(el == null) return defval;
+        return el.getValue(defval);
+    }
+
     public String toString()
     {
         if(doc == null) return "{null}";
