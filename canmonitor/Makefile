@@ -1,22 +1,14 @@
-#*******************************************************************
-# The ORTCAN Project is distributed under the 
-# Library Gnu General Public Licence. 
-# See file COPYING for details.
-#
-#*******************************************************************
+# Generic directory or leaf node makefile for OCERA make framework
 
-.PHONY: default xmlconf clean canmonitor utils-pass
+ifndef MAKERULES_DIR
+MAKERULES_DIR := $(shell ( old_pwd="" ;  while [ ! -e Makefile.rules ] ; do if [ "$$old_pwd" == `pwd`  ] ; then exit 1 ; else old_pwd=`pwd` ; cd -L .. 2>/dev/null ; fi ; done ; pwd ) )
+endif
 
+ifeq ($(MAKERULES_DIR),)
 all : default
-
-utils-pass : default
-
 .DEFAULT::
-	@
-
-
-default clean xmlconf canmonitor: 
-	./make.ant $@
-
-
+	@echo -e "\nThe Makefile.rules has not been found in this or partent directory\n"
+else	
+include $(MAKERULES_DIR)/Makefile.rules
+endif
 

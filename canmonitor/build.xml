@@ -4,8 +4,8 @@
 <project name="canmon" default="default" basedir=".">
 
     <property name="src" location="src"/>
-    <property name="class" location="class"/>
-    <property name="lib"  location="lib"/>
+    <property name="class" location="${java_class_dir}class"/>
+    <property name="lib"  location="${java_lib_dir}lib"/>
     <property name="jar.jdom"  location="lib/jdom.jar"/>
     <property name="path.monitor" value="ocera/rtcan/monitor"/>
     <property name="path.xmlconf" value="ocera/xmlconf"/>
@@ -21,6 +21,7 @@
 
     <target name="prepare-compile">
          <mkdir dir="${class}"/>
+         <mkdir dir="${lib}"/>
      </target>
 
     <target name="compile" depends="compile-monitor, compile-xmlconf">
