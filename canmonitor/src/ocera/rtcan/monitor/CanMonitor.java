@@ -6,6 +6,7 @@
  * To change this template use Options | File Templates.
  */
 package ocera.rtcan.monitor;
+
 import ocera.util.*;
 import ocera.util.xmlconfig.XmlConfig;
 import ocera.msg.*;
@@ -14,6 +15,8 @@ import ocera.rtcan.CanMonClient;
 import ocera.rtcan.CanMsg;
 import ocera.rtcan.CanOpen.ODNode;
 import ocera.rtcan.CanOpen.ObjectDictionary;
+
+//import com.intellij.uiDesigner.core.*;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -435,7 +438,9 @@ public class CanMonitor extends JFrame implements Runnable {
         btUploadSDO.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 String s = Integer.toString(selectedObject.index, 16);
-                s += " " + Integer.toString(selectedObject.subIndex, 16);
+                int six = selectedObject.subIndex;
+                if(six < 0) six = 0;
+                s += " " + Integer.toString(six, 16);
                 String node = edNodeID.getText();
                 String msg = "{SDOR UPLOAD 0 0 " + node + " " + s + "}";
                 txtMsg.append("SENDING:\t" + msg + "\n");
@@ -453,7 +458,9 @@ public class CanMonitor extends JFrame implements Runnable {
                 String msg = "{SDOR DOWNLOAD 0 0 ";
                 msg += node + " ";
                 msg += Integer.toString(selectedObject.index, 16) + " ";
-                msg += Integer.toString(selectedObject.subIndex, 16) + " ";
+                int six = selectedObject.subIndex;
+                if(six < 0) six = 0;
+                msg += Integer.toString(six, 16) + " ";
                 String bytes =  edSDO.getText();
                 msg += "[" + bytes + "]}";
                 txtMsg.append("SENDING:\t" + msg + "\n");
@@ -823,8 +830,8 @@ public class CanMonitor extends JFrame implements Runnable {
         _1.addTab("EDS", _2);
         final JSplitPane _3;
         _3 = new JSplitPane();
-        _3.setDividerSize(8);
         _3.setDividerLocation(164);
+        _3.setDividerSize(8);
         _2.add(_3, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, 0, 3, 3, 3, null, new Dimension(200, 200), null));
         final JPanel _4;
         _4 = new JPanel();
@@ -845,18 +852,18 @@ public class CanMonitor extends JFrame implements Runnable {
         final JButton _8;
         _8 = new JButton();
         btUploadSDO = _8;
-        _8.setMargin(new Insets(2, 5, 2, 5));
         _8.setText("Upload");
         _8.setMnemonic(85);
         _8.setDisplayedMnemonicIndex(0);
+        _8.setMargin(new Insets(2, 5, 2, 5));
         _6.add(_8, new com.intellij.uiDesigner.core.GridConstraints(0, 1, 1, 1, 0, 1, 3, 0, null, null, null));
         final JButton _9;
         _9 = new JButton();
         btDownloadSDO = _9;
-        _9.setMargin(new Insets(2, 5, 2, 5));
         _9.setText("Download");
         _9.setMnemonic(68);
         _9.setDisplayedMnemonicIndex(0);
+        _9.setMargin(new Insets(2, 5, 2, 5));
         _6.add(_9, new com.intellij.uiDesigner.core.GridConstraints(0, 2, 1, 1, 0, 1, 3, 0, null, null, null));
         final JLabel _10;
         _10 = new JLabel();
@@ -931,28 +938,28 @@ public class CanMonitor extends JFrame implements Runnable {
         _23.add(_27, new com.intellij.uiDesigner.core.GridConstraints(1, 7, 1, 1, 8, 1, 6, 0, null, null, null));
         final JLabel _28;
         _28 = new JLabel();
-        _28.setText("ID");
         _28.setIconTextGap(0);
+        _28.setText("ID");
         _23.add(_28, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, 8, 0, 0, 0, null, null, null));
         final JLabel _29;
         _29 = new JLabel();
-        _29.setText("byte[0]");
         _29.setIconTextGap(0);
+        _29.setText("byte[0]");
         _23.add(_29, new com.intellij.uiDesigner.core.GridConstraints(0, 1, 1, 1, 8, 0, 0, 0, null, null, null));
         final JLabel _30;
         _30 = new JLabel();
-        _30.setText("byte[4]");
         _30.setIconTextGap(0);
+        _30.setText("byte[4]");
         _23.add(_30, new com.intellij.uiDesigner.core.GridConstraints(0, 5, 1, 1, 8, 0, 0, 0, null, null, null));
         final JLabel _31;
         _31 = new JLabel();
-        _31.setText("byte[6]");
         _31.setIconTextGap(0);
+        _31.setText("byte[6]");
         _23.add(_31, new com.intellij.uiDesigner.core.GridConstraints(0, 7, 1, 1, 8, 0, 0, 0, null, null, null));
         final JLabel _32;
         _32 = new JLabel();
-        _32.setText("byte[2]");
         _32.setIconTextGap(0);
+        _32.setText("byte[2]");
         _23.add(_32, new com.intellij.uiDesigner.core.GridConstraints(0, 3, 1, 1, 8, 0, 0, 0, null, null, null));
         final JTextField _33;
         _33 = new JTextField();
@@ -960,23 +967,23 @@ public class CanMonitor extends JFrame implements Runnable {
         _23.add(_33, new com.intellij.uiDesigner.core.GridConstraints(1, 3, 1, 1, 8, 1, 6, 0, null, null, null));
         final JLabel _34;
         _34 = new JLabel();
-        _34.setText("byte[1]");
         _34.setIconTextGap(0);
+        _34.setText("byte[1]");
         _23.add(_34, new com.intellij.uiDesigner.core.GridConstraints(0, 2, 1, 1, 8, 0, 0, 0, null, null, null));
         final JLabel _35;
         _35 = new JLabel();
-        _35.setText("byte[3]");
         _35.setIconTextGap(0);
+        _35.setText("byte[3]");
         _23.add(_35, new com.intellij.uiDesigner.core.GridConstraints(0, 4, 1, 1, 8, 0, 0, 0, null, null, null));
         final JLabel _36;
         _36 = new JLabel();
-        _36.setText("byte[5]");
         _36.setIconTextGap(0);
+        _36.setText("byte[5]");
         _23.add(_36, new com.intellij.uiDesigner.core.GridConstraints(0, 6, 1, 1, 8, 0, 0, 0, null, null, null));
         final JLabel _37;
         _37 = new JLabel();
-        _37.setText("byte[7]");
         _37.setIconTextGap(0);
+        _37.setText("byte[7]");
         _23.add(_37, new com.intellij.uiDesigner.core.GridConstraints(0, 8, 1, 1, 8, 0, 0, 0, null, null, null));
         final JTextField _38;
         _38 = new JTextField();
