@@ -44,6 +44,8 @@
                 <include name="*.gif"/>
                 <include name="*.png"/>
                 <include name="*.conf.xml"/>
+                <include name="menu.xml"/>
+                <include name="*.properties"/>
             </fileset>
         </copy>
         <!-- Copy the XmlConfPanel icons images -->
