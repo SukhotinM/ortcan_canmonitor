@@ -758,6 +758,7 @@ public class CanMonitor extends JFrame implements Runnable {
                 ss = StringParser.cutInt(s, 16); s = ss[1]; //index
                 index = FString.toInt(ss[0], 16);
                 ss = StringParser.cutInt(s, 16); s = ss[1]; //subindex
+        txtMsg.append("ss[0]: " + ss[0] + "\n");
                 subindex = FString.toInt(ss[0], 16);
                 // check abort
                 s = s.trim();
@@ -793,7 +794,6 @@ public class CanMonitor extends JFrame implements Runnable {
                         if(ix >= 0) {
                             objectDictionary[ix].value = value;
                             refreshForm();
-                            //edSDO.setText(objectDictionary[ix].valToString());
                         }
                     }
                 }

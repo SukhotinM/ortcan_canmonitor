@@ -100,6 +100,15 @@ public class ODNode implements EdsTreeNode, Comparable
         return subObject;
     }
 
+    /**
+     * @return number of subobjects
+     */
+    public int subObjectCnt()
+    {
+        if(subNodes == null) return 0;
+        return subNodes.length;
+    }
+
     public String toString()
 	{
 		return getName();
@@ -286,7 +295,7 @@ public class ODNode implements EdsTreeNode, Comparable
         ODNode on = (ODNode) o;
         if(index < on.index) return -1;
         if(index > on.index) return 1;
-        if(!isSubObject()) return 0;
+        if(!isSubObject() && subObjectCnt() == 0) return 0;
         if(subIndex < on.subIndex) return -1;
         if(subIndex > on.subIndex) return 1;
         return 0;
