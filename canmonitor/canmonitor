@@ -8,5 +8,7 @@ if [ -z "$JAVA_HOME" ] ; then
   export JAVA_HOME=/opt/java
 fi
 
-$JAVA_HOME/bin/java -jar $CANMON_DIR/lib/canmonitor.jar $@
+
+# -ea - enble assertions
+$JAVA_HOME/bin/java -ea -jar $CANMON_DIR/lib/canmonitor.jar $@
 #$JAVA_HOME/bin/java -cp lib/jdom.jar:class ocera/rtcan/monitor/CanMonitor $@

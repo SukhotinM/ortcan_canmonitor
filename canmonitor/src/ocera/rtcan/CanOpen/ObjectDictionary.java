@@ -1,7 +1,7 @@
 package ocera.rtcan.CanOpen;
 
-import ocera.util.FLog;
-import ocera.util.FString;
+import org.flib.FLog;
+import org.flib.FString;
 
 import java.util.Arrays;
 
@@ -31,7 +31,7 @@ public class ObjectDictionary
     {
         ODNode ret = null;
         if(od == null) {
-            FLog.log("ODNode.findObject(" + FString.int2Hex(index) + ", " + FString.int2Hex(subindex) + ")", FLog.LOG_ERR, "Object dictionary is empty.");
+            FLog.log("ODNode.findObject(" + FString.int2HexStr(index) + ", " + FString.int2HexStr(subindex) + ")", FLog.LOG_ERR, "Object dictionary is empty.");
             return ret;
         }
 
@@ -42,14 +42,14 @@ public class ObjectDictionary
         // find index
         int ix = Arrays.binarySearch(od, odkey);
         if(ix < 0) {
-            FLog.log("ODNode.findObject(" + FString.int2Hex(index) + ", " + FString.int2Hex(subindex) + ")", FLog.LOG_ERR, "index not found.");
+            FLog.log("ODNode.findObject(" + FString.int2HexStr(index) + ", " + FString.int2HexStr(subindex) + ")", FLog.LOG_ERR, "index not found.");
             return null;
         }
         ret = od[ix];
         if(ret.subObjectCnt() == 0) return ret;
         ODNode subnodes[] = ret.subNodes;
         if(subnodes == null) {
-            FLog.log("ODNode.findObject(" + FString.int2Hex(index) + ", " + FString.int2Hex(subindex) + ")", FLog.LOG_ERR, "subnodes == NULL.");
+            FLog.log("ODNode.findObject(" + FString.int2HexStr(index) + ", " + FString.int2HexStr(subindex) + ")", FLog.LOG_ERR, "subnodes == NULL.");
             return null;
         }
         for (int i = 0; i < subnodes.length; i++) {
@@ -58,7 +58,7 @@ public class ObjectDictionary
             ret = null;
         }
         if(ret == null) {
-            FLog.log("ODNode.findObject(" + FString.int2Hex(index) + ", " + FString.int2Hex(subindex) + ")", FLog.LOG_ERR, "subindex not found..");
+            FLog.log("ODNode.findObject(" + FString.int2HexStr(index) + ", " + FString.int2HexStr(subindex) + ")", FLog.LOG_ERR, "subindex not found..");
             return null;
         }
         return ret;
@@ -69,18 +69,14 @@ public class ObjectDictionary
      * @param index
      * @param subindex ignored if object does not have subindexes
      * @param data byte array containing object data in CAN endianing (little endian)
-     * @return 0 if success
+     * @return true if success
      */
-    public int setValue(int index, int subindex, short[] data)
+    public boolean setValue(int index, int subindex, byte[] data)
     {
-        int ret = -1;
         ODNode nd = findObject(index, subindex);
-        if(nd == null) return ret;
-        nd.value = new short[data.length];
-        for (int i = 0; i < data.length; i++) {
-            nd.value[i] = data[i];
-        }
-        return 0;
+        if(nd == null) return false;
+        nd.value = data;
+        return true;
     }
 
     /**
@@ -89,14 +85,10 @@ public class ObjectDictionary
      * @param subindex subindex ignored if object does not have subindexes
      * @return byte array containing object data in CAN endianing (little endian) or null
      */
-    public short[] getValue(int index, int subindex)
+    public byte[] getValue(int index, int subindex)
     {
-        short ret[] = null;
         ODNode nd = findObject(index, subindex);
-        if(nd == null) return ret;
-        short val[] = nd.getValue();
-        ret = new short[val.length];
-        for (int i = 0; i < ret.length; i++) ret[i] = val[i];
-        return ret;
+        if(nd == null) return null;
+        return nd.getValue();
     }
 }

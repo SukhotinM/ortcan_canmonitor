@@ -1,4 +1,4 @@
-package ocera.util;
+package org.flib;
 
 /**
  * Created by IntelliJ IDEA.
@@ -26,6 +26,17 @@ public class FLog
      */
     public static int logTreshold = LOG_MSG;
 
+    /**
+     * Same as log() but does not append newline
+     * @see org.flib#log(String, int, String)
+     */
+    static public void logcont(String domain, int level, String msg) {
+        log(domain, level | LOG_IS_CONT, msg);
+    }
+    /**
+     * Same as logcont() but does not prepend domain and log level information
+     * @see org.flib#log(String, int, String)
+     */
     static public void logcont(int level, String msg) {
         log("", level | LOG_IS_CONT, msg);
     }

@@ -1,11 +1,13 @@
 package ocera.rtcan.monitor;
 
-import ocera.util.*;
 import ocera.rtcan.eds.EdsNode;
 import ocera.rtcan.eds.EdsAttribute;
 import ocera.rtcan.CanOpen.ODNode;
 import ocera.rtcan.CanOpen.ObjectDictionary;
+import ocera.rtcan.*;
 import ocera.msg.ErrorMsg;
+import ocera.util.FFile;
+import ocera.util.StringParser;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionListener;
@@ -25,6 +27,9 @@ import java.net.URL;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.awt.*;
+
+import org.flib.FString;
+import org.flib.FLog;
 
 /**
  * Created by IntelliJ IDEA.
@@ -101,7 +106,7 @@ public class CANopenDevicePanel extends JPanel
     protected AttrModel attrModel = new AttrModel();
     protected ODNode selectedObject = null;
     protected ObjectDictionary objectDictionary = new ObjectDictionary();
-    private short[] valueProcessedByDownload = null;
+    private byte[] valueProcessedByDownload = null;
 
     private CanMonitor mainApp;
     private int tabIndex; //< index in CanMonitor tabbed pane
@@ -202,16 +207,15 @@ public class CANopenDevicePanel extends JPanel
         //==========================================================
         //        btUploadSDO listenner
         //==========================================================
-        // {SDOR UPLOAD server_port client_port node index subindex}
         // server_port == 0, client_port == 0 means: use default values for SDO communication
         btUploadSDO.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                String s = Integer.toString(selectedObject.index, 16);
+                SDOUploadRequestMsg msg = new SDOUploadRequestMsg();
+                msg.index = selectedObject.index;
                 int six = selectedObject.subIndex;
                 if(six < 0) six = 0;
-                s += " " + Integer.toString(six, 16);
-                String node = edNodeID.getText();
-                String msg = "{SDOR UPLOAD 0 0 " + node + " " + s + "}";
+                msg.subindex = six;
+                msg.node = Integer.parseInt(edNodeID.getText());
                 txtLog.append("SENDING:\t" + msg + "\n");
                 mainApp.sendMessage(msg);
             }
@@ -220,22 +224,18 @@ public class CANopenDevicePanel extends JPanel
         //==========================================================
         //        btDownloadSDO listenner
         //==========================================================
-        // {SDOR DOWNLOAD server_port client_port node index subindex [dd dd ...]}
         btDownloadSDO.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                String node = edNodeID.getText();
-                String msg = "{SDOR DOWNLOAD 0 0 ";
-                msg += node + " ";
-                msg += Integer.toString(selectedObject.index, 16) + " ";
+                SDODownloadRequestMsg msg = new SDODownloadRequestMsg();
+                msg.index = selectedObject.index;
                 int six = selectedObject.subIndex;
                 if(six < 0) six = 0;
-                msg += Integer.toString(six, 16) + " ";
-                String bytes =  edSDO.getText();
-                msg += "[" + bytes + "]}";
+                msg.subindex = six;
+                msg.node = Integer.parseInt(edNodeID.getText());
+                msg.data = ODNode.string2ValArray2(edSDO.getText());
+                valueProcessedByDownload = msg.data;
                 txtLog.append("SENDING:\t" + msg + "\n");
                 mainApp.sendMessage(msg);
-                valueProcessedByDownload = ODNode.string2ValArray2(bytes);
-                //FLog.log("CanMonitor", FLog.LOG_TRASH, "valueProcessedByDownload = " + bytes);
             }
         });
 
@@ -290,11 +290,11 @@ public class CANopenDevicePanel extends JPanel
         }
         catch(FileNotFoundException e) {
 //            new ErrorMsg(this).show("File not found: " + fname);
-            new ErrorMsg(this).show(e.toString());
+            ErrorMsg.show(e.toString());
             return;
         }
         catch (IOException e ) {
-            new ErrorMsg(this).show(e.toString());
+            ErrorMsg.show(e.toString());
             return;
         }
 
@@ -459,76 +459,38 @@ public class CANopenDevicePanel extends JPanel
      * try to process incoming message
      * @return true if the message is procesed
      */
-    public boolean tasteMessage(String msg)
+    public boolean tasteObject(Object o)
     {
         // read all received messages if any
-        boolean ret = false;
-        do {
-            // parse datagram
-            String s = FString.slice(msg, 1, -1);
-            String ss[];
-            if(s.matches("SDOC.*")) {
-                // found SDO msg start
-                // {SDOC UPLOAD server_port client_port node index subindex [...]}
-                // {SDOC DOWNLOAD server_port client_port node index subindex}
-                int node, index, subindex;
-                short[] value = null;
-                boolean upload = false;
-                txtLog.append("RECEIVE[" + ++msgCount + "]:\t" + s + "\n");
-                s = s.substring(5).trim();
-                if(s.matches("UPLOAD.*")) {
-                    s = s.substring(7); upload = true;
-                }
-                else if(s.matches("DOWNLOAD.*")) s = s.substring(9);
+        FLog.log(getClass().getName(), FLog.LOG_TRASH, "node " + getNodeID() + " - tasteObject() - " + o);
+        if(!(o instanceof SDOConfirmMsg)) return false;
 
-                ss = StringParser.cutInt(s, 16); s = ss[1]; //server_port
-                ss = StringParser.cutInt(s, 16); s = ss[1]; //client_port
-                ss = StringParser.cutInt(s, 16); s = ss[1]; //node
-                node = FString.toInt(ss[0], 16);
-                ss = StringParser.cutInt(s, 16); s = ss[1]; //index
-                index = FString.toInt(ss[0], 16);
-                ss = StringParser.cutInt(s, 16); s = ss[1]; //subindex
-                subindex = FString.toInt(ss[0], 16);
+        SDOConfirmMsg msg = (SDOConfirmMsg) o;
+        // check if it is message for me
+        if(msg.node != getNodeID()) return false;
 
-                // check if it is message for me
-                if(node != getNodeID()) break;
-                txtLog.append(msg + '\n');
-                ret = true;
-
-                // check abort
-                s = s.trim();
-                if(s.matches("ABORT.*")) {
-                    new ErrorMsg(this).show(s);
-                }
-                else if(s.matches("ERROR.*")) {
-                    new ErrorMsg(this).show(s);
-                }
-                else {
-                    if(upload) {
-                        if(s.charAt(0) == '[') {
-                            s = FString.slice(s, 1, -1);
-                            value = ODNode.string2ValArray2(s);
-                        }
-                        else {
-                            value = new short[0];
-                        }
-                        objectDictionary.setValue(index, subindex, value);
-                    }
-                    else {
-                        // succesful download, store new value aloso to OD
-                        if(valueProcessedByDownload != null) {
-                            objectDictionary.setValue(index, subindex, valueProcessedByDownload);
-                        }
-                    }
-                }
-            }
-            else {
-                FLog.logcont(FLog.LOG_DEB, "unknown message type: " + s);
+        txtLog.append("RECEIVE[" + ++msgCount + "]:\t" + o + "\n");
+        // check abort
+        if(msg.type == SDOConfirmMsg.MSG_ABORT) {
+            ErrorMsg.show(this, "ABORT - " + msg.errmsg);
+        }
+        else if(msg.type == SDOConfirmMsg.MSG_ERROR) {
+            ErrorMsg.show(this, "ERROR - " + msg.errmsg);
+        }
+        else if (o instanceof SDOUploadConfirmMsg) {
+            SDOUploadConfirmMsg umsg = (SDOUploadConfirmMsg)o;
+            objectDictionary.setValue(umsg.index, umsg.subindex, umsg.data);
+        }
+        else if (o instanceof SDODownloadConfirmMsg) {
+            SDODownloadConfirmMsg download_msg = (SDODownloadConfirmMsg)o;
+            // succesful download, store new value also to OD
+            if (valueProcessedByDownload != null) {
+                objectDictionary.setValue(download_msg.index, download_msg.subindex, valueProcessedByDownload);
             }
             valueProcessedByDownload = null;
-            refreshPanel();
-        } while(false);
-        return ret;
+        }
+        refreshPanel();
+        return true;
     }
 
     {
@@ -543,12 +505,13 @@ public class CANopenDevicePanel extends JPanel
      * >>> IMPORTANT!! <<<
      * DO NOT edit this method OR call it in your code!
      */
-    private void $$$setupUI$$$() {
+    private void $$$setupUI$$$()
+    {
         final JTabbedPane _1;
         _1 = new JTabbedPane();
         pane = _1;
-        _1.setTabPlacement(3);
         _1.setTabLayoutPolicy(0);
+        _1.setTabPlacement(3);
         final JPanel _2;
         _2 = new JPanel();
         _2.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
@@ -577,18 +540,18 @@ public class CANopenDevicePanel extends JPanel
         final JButton _8;
         _8 = new JButton();
         btUploadSDO = _8;
+        _8.setMargin(new Insets(2, 5, 2, 5));
         _8.setText("Upload");
         _8.setMnemonic(85);
         _8.setDisplayedMnemonicIndex(0);
-        _8.setMargin(new Insets(2, 5, 2, 5));
         _6.add(_8, new com.intellij.uiDesigner.core.GridConstraints(0, 1, 1, 1, 0, 1, 3, 0, null, null, null));
         final JButton _9;
         _9 = new JButton();
         btDownloadSDO = _9;
+        _9.setMargin(new Insets(2, 5, 2, 5));
         _9.setText("Download");
         _9.setMnemonic(68);
         _9.setDisplayedMnemonicIndex(0);
-        _9.setMargin(new Insets(2, 5, 2, 5));
         _6.add(_9, new com.intellij.uiDesigner.core.GridConstraints(0, 2, 1, 1, 0, 1, 3, 0, null, null, null));
         final JLabel _10;
         _10 = new JLabel();

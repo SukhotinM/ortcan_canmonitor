@@ -23,84 +23,113 @@
 package org.jx.xmlgui;
 
 
-import ocera.util.FLog;
+import org.flib.FLog;
 
+import javax.swing.*;
 import java.util.Properties;
 import java.net.URL;
 import java.io.IOException;
 
-public abstract class XMLWidgetBuilder {
-  /**
-   * The properties bundle that the builder will reference to for 
-   * things like getReferencedLabel.
-   */
-  protected Properties properties = new Properties();
-
-  /**
-   * Reference point into the CLASSPATH for locating the XML file.
-   */
-  protected Class ref;
+public abstract class XMLWidgetBuilder
+{
+    /**
+    * The properties bundle that the builder will reference to for
+    * things like getReferencedLabel.
+    */
+    protected Properties properties = new Properties();
 
     /**
-   * Set the reference point for URL location.
-   * 
-   * @param ref the reference point for local urls to be loaded from.
-   */
-  public void setReference(Class ref) {
-    this.ref = ref;
-  }
+    * Reference point into the CLASSPATH for locating the XML file.
+    */
+    protected Class ref;
 
-  /**
-   * Set the element as the item containing configuration for the 
-   * builder. This would usually be the link tag in the head.
-   *
-   * @param config the element containing configuration data
-   */
-  public void setConfiguration(org.jdom.Element config) {
-    try {
-      URL linkURL;
-//      Class local = ((ref == null) ? getClass() : ref);
-//      Class local=getClass();
-      // get the string properties
-      if(config.getAttributeValue("href", "").length() != 0
-	     && config.getAttributeValue("role", "").equals("stringprops")
-	     && config.getName().equals("link"))
-      {
-        // this should never return null
-        String resource = config.getAttributeValue("href", "NOT_SET");
-        linkURL = ref.getResource(resource);
-        //FLog.log("XMLWidgetBuilder", FLog.LOG_DEB, "ref package: '" + ref.getPackage() + "'");
-        //FLog.log("XMLWidgetBuilder", FLog.LOG_DEB, "setConfiguration() - read: '" + resource + "'");
-        if(linkURL == null) {
-            FLog.log("XMLWidgetBuilder", FLog.LOG_ERR, "setConfiguration() - properties '" + resource + "' not found");
-        }
-        else {
-            FLog.log("XMLWidgetBuilder", FLog.LOG_DEB, "setConfiguration() - loading properties: '" + linkURL.toExternalForm() + "'");
-            properties.load(linkURL.openStream());
-        }
-      }
-    } catch (IOException io) {
-      io.printStackTrace();
+    /**
+    * Set the reference point for URL location.
+    *
+    * @param ref the reference point for local urls to be loaded from.
+    */
+    public void setReference(Class ref) {
+        this.ref = ref;
     }
-  }
 
-  /**
-   * Get a label referenced by the string properties file.
-   * @param current the element to process
-   * @param attr the attribute to look up
-   * @return the string as post lookup, or the string pre lookup if 
-   * the lookup failed
-   */
-  public String getReferencedLabel(org.jdom.Element current, String attr)
-  {
-    String label = current.getAttributeValue(attr, attr + " NOT_FOUND");
-//    FLog.log("XMLWidgetBuilder", FLog.LOG_DEB, "getReferencedLabel() - looking for attr: " + attr + " found: " + label);
-    // if it starts with a '$' we crossreference to properties
-    if (label != null && label.length() > 0 && label.charAt(0) == '$') {
-        String key = label.substring(1);
-        label = properties.getProperty(key, label);
+    /**
+    * Empty icon to keep space in menus withouth icon
+    */
+    static public ImageIcon icoEmpty = loadEmptyIcon();
+
+    static ImageIcon loadEmptyIcon()
+    {
+        Class c;
+        try {
+            c = Class.forName("org.jx.xmlgui.XMLActionMapBuilder");
+        } catch (ClassNotFoundException e) {
+            c = null;
+        }
+        if(c == null) {
+            //FLog.log("XMLActionMapBuilder", FLog.LOG_DEB, "loadEmptyIcon() - class is null");
+            return null;
+        }
+        //FLog.log("XMLActionMapBuilder", FLog.LOG_DEB, "loadEmptyIcon() - class: " + c.toString());
+
+        URL url = c.getResource("resources/empty18.png");
+        ImageIcon ico = null;
+        if(url != null) ico = new ImageIcon(url);
+        FLog.log("XMLActionMapBuilder", FLog.LOG_DEB, "loadEmptyIcon() - icon: " + ico);
+        return ico;
     }
-    
-    return label;
-  }
+
+    /**
+     * Set the element as the item containing configuration for the
+     * builder. This would usually be the link tag in the headMagic.
+     *
+     * @param config the element containing configuration data
+     */
+    public void setConfiguration(org.jdom.Element config)
+    {
+        if(config == null) return;
+        try {
+    //      Class local = ((ref == null) ? getClass() : ref);
+    //      Class local=getClass();
+            // get the string properties
+            if (config.getAttributeValue("href", "").length() != 0
+                    && config.getAttributeValue("role", "").equals("stringprops")
+                    && config.getName().equals("link")) {
+                // this should never return null
+                URL linkURL;
+                String resource = config.getAttributeValue("href", "NOT_SET");
+                linkURL = ref.getResource(resource);
+                //FLog.log("XMLWidgetBuilder", FLog.LOG_DEB, "ref package: '" + ref.getPackage() + "'");
+                //FLog.log("XMLWidgetBuilder", FLog.LOG_DEB, "setConfiguration() - read: '" + resource + "'");
+                if (linkURL == null) {
+                    FLog.log("XMLWidgetBuilder", FLog.LOG_ERR, "setConfiguration() - properties '" + resource + "' not found");
+                } else {
+                    FLog.log("XMLWidgetBuilder", FLog.LOG_DEB, "setConfiguration() - loading properties: '" + linkURL.toExternalForm() + "'");
+                    properties.load(linkURL.openStream());
+                }
+            }
+        } catch (IOException io) {
+            io.printStackTrace();
+        }
+    }
+
+    /**
+     * Get a label referenced by the string properties file.
+     *
+     * @param current the element to process
+     * @param attr    the attribute to look up
+     * @return the string as post lookup, or the string pre lookup if
+     *         the lookup failed
+     */
+    public String getReferencedLabel(org.jdom.Element current, String attr)
+    {
+        String label = current.getAttributeValue(attr, attr + " NOT_FOUND");
+//      FLog.log("XMLWidgetBuilder", FLog.LOG_DEB, "getReferencedLabel() - looking for attr: " + attr + " found: " + label);
+        // if it starts with a '$' we crossreference to properties
+        if (label != null && label.length() > 0 && label.charAt(0) == '$') {
+            String key = label.substring(1);
+            label = properties.getProperty(key, label);
+        }
+
+        return label;
+    }
 }

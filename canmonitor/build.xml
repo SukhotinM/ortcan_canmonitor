@@ -57,6 +57,7 @@
         </copy>
         <javac srcdir="${src}" destdir="${class}"
             classpath="${jar.jdom}:${jar.ui}"
+            source="1.4"
             debug="true"
             optimize="false"
             includes="${path.monitor}/CanMonitor.java"

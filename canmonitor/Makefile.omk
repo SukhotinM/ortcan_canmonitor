@@ -31,4 +31,9 @@ utils-pass-local: jar-monitor jar-xmlconf
 endif
 
 jar-xmlconf jar-monitor:
-	$(ANT) -Djava_class_dir=$(USER_OBJS_DIR)/ -Djava_lib_dir=$(USER_BIN_DIR)/ -buildfile $(srcdir)/build.xml $@
+	$(ANT) -Djava_class_dir=$(USER_OBJS_DIR)/ -Djava_lib_dir=$(USER_BIN_DIR)/ \
+	       -buildfile $(srcdir)/build.xml $@
+
+clean-java:
+	$(ANT) -Djava_class_dir=$(USER_OBJS_DIR)/ -Djava_lib_dir=$(USER_BIN_DIR)/ \
+	       -buildfile $(srcdir)/build.xml clean

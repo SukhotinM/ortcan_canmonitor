@@ -7,19 +7,23 @@
  */
 package ocera.rtcan.monitor;
 
-import ocera.util.*;
 import ocera.util.xmlconfig.XmlConfig;
+import ocera.util.*;
 import ocera.msg.*;
 import ocera.rtcan.CanMonClient;
-import ocera.rtcan.CanMsg;
+import ocera.rtcan.CANDtgMsg;
 
 import javax.swing.*;
 import java.io.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.net.URL;
 
 import org.jx.xmlgui.XMLMenuBuilder;
+import org.jx.xmlgui.XMLActionMapBuilder;
+import org.jx.xmlgui.XMLAction;
+import org.jx.xmlgui.XMLToolbarBuilder;
+import org.flib.FLog;
+import org.flib.FString;
 
 
 public class CanMonitor extends JFrame implements Runnable
@@ -112,6 +116,7 @@ public class CanMonitor extends JFrame implements Runnable
                     // debug level
                     i++;
                     if(i < args.length) FLog.logTreshold = Integer.parseInt(args[i]);
+                    System.err.println("logTreshold: " + FLog.logTreshold);
                 }
                 else if(c == 'h') {
                     // help
@@ -121,8 +126,7 @@ public class CanMonitor extends JFrame implements Runnable
             }
         }
         if(edsFile != null) {
-//            treeEdsRootNode.setUserObject(edsFile);
-//            openEDS(edsFile);
+            openEDS(edsFile);
         }
     }
 
@@ -147,8 +151,11 @@ public class CanMonitor extends JFrame implements Runnable
 
     public CanMonitor(String[] cmd_line_args)
     {
-        super("RT CAN monitor - Beta 0.1");
-
+        super("CANopen monitor - Beta 0.9");
+        boolean asserts_enabled = false;
+        assert asserts_enabled = true;
+        
+    
         edCanData[0] = edCanData0;
         edCanData[1] = edCanData1;
         edCanData[2] = edCanData2;
@@ -160,7 +167,8 @@ public class CanMonitor extends JFrame implements Runnable
 
         loadConfig();
         processCmdLine(cmd_line_args);
-        System.out.println("Logging level: " + FLog.logTreshold);
+        System.err.println("asserts enabled: " + asserts_enabled);
+        System.err.println("Logging level: " + FLog.logTreshold);
         initActions();
         initGui();
         init();
@@ -193,105 +201,115 @@ public class CanMonitor extends JFrame implements Runnable
         try {
             ff.writeString(s, FFile.MODE_OVERWRITE, FFile.OVERWRITE_FILE);
         } catch (IOException e) {
-            new ErrorMsg(this).show("Error writing config file: " + e);
+            ErrorMsg.show("Error writing config file: " + e);
         } catch (FFileException e) {
-            new ErrorMsg(this).show("Error writing config file: " + e);
+            ErrorMsg.show("Error writing config file: " + e);
         }
     }
 
     public void initActions()
     {
-        final CanMonitor app = this;
-        URL url = this.getClass().getResource("resources/file-open.png");
-        ImageIcon ico = new ImageIcon(url);
-        Action act;
-        act = new AbstractAction("Open EDS", ico) {
-                    public void actionPerformed(ActionEvent e) {
+        //final CanMonitor app = this;
 
-                        JFileChooser fc = new JFileChooser();
-                        FFileFilter filter = new FFileFilter();
-                        filter.addExtension("EDS");
-                        filter.addExtension("eds");
-                        filter.setDescription("EDS Electronic Data Sheets");
-                        fc.setFileFilter(filter);
-                        String pwd = System.getProperty("user.dir", ".");
-                        fc.setCurrentDirectory(new File(pwd));
+        XMLActionMapBuilder ab = new XMLActionMapBuilder(this);
+        actions = ab.buildFrom("resources/menu.xml");
 
-                        int ret = fc.showOpenDialog(CanMonitor.this);
-                        if(ret == JFileChooser.APPROVE_OPTION) {
-                            String fname = fc.getSelectedFile().getAbsolutePath();
-                            int ix = tabPane.getTabCount();
-                            // find free node number
-                            int node = 0;
-                            for(int i=1; i<ix; i++) {
-                                CANopenDevicePanel p =  (CANopenDevicePanel)tabPane.getComponentAt(i);
-                                int nd = p.getNodeID();
-                                if(nd > node) node = nd;
-                            }
-                            CANopenDevicePanel candev = new CANopenDevicePanel(app, ix);
-                            tabPane.add(candev);
-                            tabPane.setSelectedIndex(ix);    // select tab EDS
-                            candev.openEDS(fname);
-                            candev.setNodeID(++node);
-                        }
-                    }
-                };
-        act.putValue(Action.SHORT_DESCRIPTION, "Open EDS in new tab");
-        actions.put("EdsOpen", act);
+        XMLAction act;
+        act = (XMLAction)actions.get("EdsOpen");
+        if(act != null) act.actionListener = new ActionListener()
+        {
+            public void actionPerformed(ActionEvent e) {
+                JFileChooser fc = new JFileChooser();
+                FFileFilter filter = new FFileFilter();
+                filter.addExtension("EDS");
+                filter.addExtension("eds");
+                filter.setDescription("EDS Electronic Data Sheets");
+                fc.setFileFilter(filter);
+                String pwd = System.getProperty("user.dir", ".");
+                fc.setCurrentDirectory(new File(pwd));
 
-        ico = new ImageIcon(getClass().getResource("resources/eds-close.png"));
-        act = new AbstractAction("Close EDS", ico) {
-                    public void actionPerformed(ActionEvent e) {
-                        int ix = tabPane.getSelectedIndex();
-                        if(ix > 0) {
-                            CANopenDevicePanel candev = (CANopenDevicePanel)tabPane.getComponentAt(ix);
-                            tabPane.remove(candev);
-                            //candeviceList.remove(candev);
-                        }
-                    }
-                };
-        act.putValue(Action.SHORT_DESCRIPTION, "Close current EDS tab");
-        actions.put("EdsClose", act);
+                int ret = fc.showOpenDialog(CanMonitor.this);
+                if(ret == JFileChooser.APPROVE_OPTION) {
+                    String fname = fc.getSelectedFile().getAbsolutePath();
+                    openEDS(fname);
+                }
+            }
+        };
 
-        act = new AbstractAction("Connect") {
-                    public void actionPerformed(ActionEvent e) {
-                        connect();
-                    }
-                };
-        actions.put("Connect", act);
+        act = (XMLAction)actions.get("EdsClose");
+        if(act != null) act.actionListener = new ActionListener()
+        {
+            public void actionPerformed(ActionEvent e) {
+                int ix = tabPane.getSelectedIndex();
+                if(ix > 0) {
+                    CANopenDevicePanel candev = (CANopenDevicePanel)tabPane.getComponentAt(ix);
+                    tabPane.remove(candev);
+                    //candeviceList.remove(candev);
+                }
+            }
+        };
 
-        act = new AbstractAction("Disconnect") {
-                    public void actionPerformed(ActionEvent e) {
-                        disConnect();
-                    }
-                };
-        actions.put("Disconnect", act);
+        act = (XMLAction)actions.get("Connect");
+        if(act != null) act.actionListener = new ActionListener()
+        {
+            public void actionPerformed(ActionEvent e) {
+                connect();
+            }
+        };
 
-        act = new AbstractAction("Config") {
-                    public void actionPerformed(ActionEvent e) {
-                        openConfigDialog();
-                    }
-                };
-        actions.put("Config", act);
+        act = (XMLAction)actions.get("Disconnect");
+        if(act != null) act.actionListener = new ActionListener()
+        {
+            public void actionPerformed(ActionEvent e) {
+                disConnect();
+            }
+        };
 
-        act = new AbstractAction("Reset device") {
-                    public void actionPerformed(ActionEvent e) {
-                        edCanID.setText("0");
-                        edCanData[0].setText("1");
-                        edCanData[1].setText("0");
-                        btSend.getActionListeners()[0].actionPerformed(null);
-                    }
-                };
-        actions.put("DeviceReset", act);
+        act = (XMLAction)actions.get("Config");
+        if(act != null) act.actionListener = new ActionListener()
+        {
+            public void actionPerformed(ActionEvent e) {
+                openConfigDialog();
+            }
+        };
 
-        act = new AbstractAction("Quit") {
-                    public void actionPerformed(ActionEvent e) {
-                        cleanUp();
-                        System.gc();
-                        System.exit(0);
-                    }
-                };
-        actions.put("Quit", act);
+        act = (XMLAction)actions.get("DevicesReset");
+        if(act != null) act.actionListener = new ActionListener()
+        {
+            public void actionPerformed(ActionEvent e) {
+                edCanID.setText("0");
+                edCanData[0].setText("1");
+                edCanData[1].setText("0");
+                btSend.getActionListeners()[0].actionPerformed(null);
+            }
+        };
+
+        act = (XMLAction)actions.get("Quit");
+        if(act != null) act.actionListener = new ActionListener()
+        {
+            public void actionPerformed(ActionEvent e) {
+                cleanUp();
+                System.gc();
+                System.exit(0);
+            }
+        };
+    }
+
+    private void openEDS(String fname)
+    {
+        int ix = tabPane.getTabCount();
+        // find free node number
+        int node = 0;
+        for(int i=1; i<ix; i++) {
+            CANopenDevicePanel p =  (CANopenDevicePanel)tabPane.getComponentAt(i);
+            int nd = p.getNodeID();
+            if(nd > node) node = nd;
+        }
+        CANopenDevicePanel candev = new CANopenDevicePanel(CanMonitor.this, ix);
+        tabPane.add(candev);
+        tabPane.setSelectedIndex(ix);    // select tab EDS
+        candev.openEDS(fname);
+        candev.setNodeID(++node);
     }
 
     public void initGui()
@@ -301,21 +319,14 @@ public class CanMonitor extends JFrame implements Runnable
         //==========================================================
         // menu bar
         //==========================================================
-        XMLMenuBuilder builder = new XMLMenuBuilder(this);
-        String menu_file_name = "resources/menu.xml";
-        FLog.log("CanMonitor", FLog.LOG_DEB, "initGui() - open URL '" + menu_file_name + "'");
-        URL url = getClass().getResource(menu_file_name);
-        setJMenuBar(builder.buildFrom(url, actions));
+        XMLMenuBuilder builder = new XMLMenuBuilder(this, actions);
+        setJMenuBar(builder.buildFrom("resources/menu.xml"));
 
         //==========================================================
         // tool bar
         //==========================================================
-        JToolBar tb = new JToolBar();
-        tb.setRollover(true);
-        tb.add(actions.get("EdsOpen"));
-        tb.add(actions.get("EdsClose"));
-        //tb.addSeparator();
-        //tb.add(new JSeparator(SwingConstants.VERTICAL));
+        XMLToolbarBuilder tbb = new XMLToolbarBuilder(this, actions);
+        JToolBar tb = tbb.buildFrom("resources/menu.xml");
         pane.add(tb, BorderLayout.NORTH);
 
         //==========================================================
@@ -333,15 +344,11 @@ public class CanMonitor extends JFrame implements Runnable
         btSend.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
 //                {CANDTG 0 0 0 209 [FF]}
-                String msg = "{CANDTG 0 0 0 " + edCanID.getText() + " [";
-                String s;
-                for(int i=0; i<8; i++) {
-                    s = edCanData[i].getText().trim();
-                    if(s.length() == 0) break;
-                    if(i>0) msg += " ";
-                    msg += s;
+                CANDtgMsg msg = new CANDtgMsg();
+                msg.id = FString.toInt(edCanID.getText());
+                for(int i=0; i<CANDtgMsg.DATA_LEN_MAX; i++) {
+                    msg.data[i] = (byte) FString.toInt(edCanData[i].getText().trim(), 10);
                 }
-                msg += "]}";
                 txtLog.append("SENDING:\t" + msg + "\n");
                 canConn.send(msg);
             }
@@ -365,10 +372,18 @@ public class CanMonitor extends JFrame implements Runnable
 
     private void refreshForm()
     {
-        if(canConn.getSocket() == null)
+        boolean connected  = (canConn.getSocket() != null);
+        XMLAction act;
+        act = (XMLAction)actions.get("Connect");
+        act.setEnabled(!connected);
+        act = (XMLAction)actions.get("Disconnect");
+        act.setEnabled(connected);
+        if(!connected) {
             statusBar.lbl1.setText("disconnected");
-        else
+        }
+        else {
             statusBar.lbl1.setText(canConn.getSocket().toString());
+        }
         statusBar.lbl2.setText("");
         statusBar.lbl3.setText("");
     }
@@ -401,13 +416,12 @@ public class CanMonitor extends JFrame implements Runnable
 
     /**
      * sends msg to the socket if it is opened
-     * @param msg
      */
-    void sendMessage(String msg)
+    void sendMessage(Object o)
     {
         if(canConn == null) return;
         if(!canConn.connected()) return;
-        canConn.send(msg);
+        canConn.send(o);
     }
 
     private int msgCount = 0;
@@ -420,49 +434,25 @@ public class CanMonitor extends JFrame implements Runnable
     {
         // read all received messages if any
         while(true) {
-            String s = (String)canConn.readQueue.remove(RoundQueue.NO_BLOCKING);
-            if(s == null) break;
-            FLog.log("CanMonitor", FLog.LOG_DEB, "received CAN message " + s);
+            Object o = canConn.readQueue.remove(RoundQueue.NO_BLOCKING);
+            if(o == null) break;
+            //FLog.log("CanMonitor", FLog.LOG_DEB, "received CAN message " + s);
             msgCount++;
 
-            // parse datagram
-            String msg = s;
-            s = FString.slice(s, 1, -1);
-            String ss[];
-            if(s.matches("CANDTG.*")) {
-                // found CAN msg start
-                if(!cbxShowRoughMessages.isSelected()) continue;
-
-                txtLog.append("RECEIVE[" + msgCount + "]:\t" + s + "\n");
-                s = s.substring(7);
-                CanMsg canmsg = new CanMsg();
-                ss = StringParser.cutInt(s, 16); s = ss[1]; //flags
-                ss = StringParser.cutInt(s, 16); s = ss[1]; //cob
-                ss = StringParser.cutInt(s, 16); s = ss[1]; //timestamp
-                ss = StringParser.cutInt(s, 16); s = ss[1]; //id
-                canmsg.id = FString.toInt(ss[0], 16);   //id
-                canmsg.length = 0;
-                s = s.trim();
-                if(s.charAt(0) == '[') {
-                    s = FString.slice(s, 1, -1);
-                    while(canmsg.length < CanMsg.DATA_LEN_MAX) {
-                        ss = StringParser.cutInt(s, 16); s = ss[1];
-                        if(ss[0].trim().length() == 0) break;
-                        canmsg.data[canmsg.length++] = (short) FString.toInt(ss[0], 16);
-                    }
-                }
-                txtLog.append("\t" + canmsg + "\n");
-                refreshForm();
+            if(o instanceof CANDtgMsg) {
+                if(cbxShowRoughMessages.isSelected()) txtLog.append("RECEIVE[" + msgCount + "]:\t" + o + "\n");
             }
             else {
                 // scan all CANopen devices
                 for(int i=1; i<tabPane.getTabCount(); i++) {
                     CANopenDevicePanel p =  (CANopenDevicePanel)tabPane.getComponentAt(i);
-                    if(p.tasteMessage(msg)) break;
+                    if(p.tasteObject(o)) break;
                 }
             }
-            FLog.logcont(FLog.LOG_DEB, "unknown message: " + msg);
         }
+        // refresh form
+        refreshForm();
+        //FLog.log(getClass().getName(), FLog.LOG_TRASH, "run(): GUI updated");
     }
 
     {
@@ -477,12 +467,13 @@ public class CanMonitor extends JFrame implements Runnable
      * >>> IMPORTANT!! <<<
      * DO NOT edit this method OR call it in your code!
      */
-    private void $$$setupUI$$$() {
+    private void $$$setupUI$$$()
+    {
         final JTabbedPane _1;
         _1 = new JTabbedPane();
         tabPane = _1;
-        _1.setTabLayoutPolicy(0);
         _1.setTabPlacement(1);
+        _1.setTabLayoutPolicy(0);
         final JPanel _2;
         _2 = new JPanel();
         _2.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(3, 1, new Insets(3, 3, 0, 0), 3, -1));
@@ -607,8 +598,8 @@ public class CanMonitor extends JFrame implements Runnable
         final JButton _29;
         _29 = new JButton();
         btClearLog = _29;
-        _29.setVerticalAlignment(0);
         _29.setText("Clear log");
+        _29.setVerticalAlignment(0);
         _27.add(_29, new com.intellij.uiDesigner.core.GridConstraints(0, 2, 1, 1, 1, 1, 3, 1, null, null, null));
         final com.intellij.uiDesigner.core.Spacer _30;
         _30 = new com.intellij.uiDesigner.core.Spacer();

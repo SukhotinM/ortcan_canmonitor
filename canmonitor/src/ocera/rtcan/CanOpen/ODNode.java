@@ -1,11 +1,12 @@
 package ocera.rtcan.CanOpen;
 
 import ocera.rtcan.monitor.EdsTreeNode;
-import ocera.util.FString;
 import ocera.util.StringParser;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+
+import org.flib.FString;
 
 class DataTypeDef
 {
@@ -55,7 +56,7 @@ public class ODNode implements EdsTreeNode, Comparable
 
     public ODNode[] subNodes = null;
 
-    public short[] value = null;
+    public byte[] value = null;
 
     public boolean subObject = false; // is it item if struct or array ?
 
@@ -245,7 +246,7 @@ public class ODNode implements EdsTreeNode, Comparable
 
     public String valToString()
     {
-        short[] val = getValue();
+        byte[] val = getValue();
         //if(value == null) return "value not loaded";
         String s = "";
         for(int i = 0; i < val.length; i++) {
@@ -256,9 +257,9 @@ public class ODNode implements EdsTreeNode, Comparable
     }
 
     /**
-     * convert '0xdddddddd' to short[], 0xddddd is hexadecimal number, msb is first in returned array
+     * convert '0xdddddddd' to byte[], 0xddddd is hexadecimal number, msb is first in returned array
      */
-    public static short[] string2ValArray(String s)
+    public static byte[] string2ValArray(String s)
     {
         String s1 = FString.slice(s, 2); // cut 0x
         ArrayList al = new ArrayList(8);
@@ -268,9 +269,9 @@ public class ODNode implements EdsTreeNode, Comparable
             int i = FString.toInt(s2, 16);
             al.add(new Integer(i));
         }
-        short[] ret = new short[al.size()];
+        byte[] ret = new byte[al.size()];
         for (int i = 0; i < ret.length; i++) {
-            ret[i] = ((Integer)al.get(i)).shortValue();
+            ret[i] = ((Integer)al.get(i)).byteValue();
         }
         return ret;
     }
@@ -278,7 +279,7 @@ public class ODNode implements EdsTreeNode, Comparable
     /**
      * convert 'nn nn nn nn nn' to short[], nn are hexadecimal numbers
      */
-    public static short[] string2ValArray2(String s)
+    public static byte[] string2ValArray2(String s)
     {
         ArrayList lst = new ArrayList(8);
         String ss[];
@@ -287,14 +288,14 @@ public class ODNode implements EdsTreeNode, Comparable
             if(ss[0].trim().length() == 0) break;
             lst.add(new Short((short) FString.toInt(ss[0], 16)));
         }
-        short[] ret = new short[lst.size()];
+        byte[] ret = new byte[lst.size()];
         for (int i = 0; i < ret.length; i++) {
-            ret[i] = ((Short)lst.get(i)).shortValue();
+            ret[i] = ((Short)lst.get(i)).byteValue();
         }
         return ret;
     }
 
-    public short[] getValue()
+    public byte[] getValue()
     {
         if(value == null) value = string2ValArray(defaultValue);
         return value;

@@ -22,10 +22,11 @@
 
 package org.jx.xmlgui;
 
-import ocera.util.FLog;
+import org.flib.FLog;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 //import java.io.InputStream;
 import java.io.IOException;
 import java.net.URL;
@@ -48,16 +49,23 @@ import javax.swing.*;
  */
 public class XMLMenuBuilder extends XMLWidgetBuilder
 {
-  static final String id_attr = "id";
+  static final String action_id_attr = "action_id";
   static final String menu_tag = "menu";
-  static final String label_attr = "label";
+  static final String label_attr = "caption";
   static final String separator_attr = "separator";
   static final String menuitem_tag = "menuitem";
   static final String checkbox_attr = "checkbox";
   static final String radio_attr = "radio";
   static final String group_attr = "group";
-  static final String accel_attr = "accel";
+  static final String mnemonic_attr = "mnemonic";
+  static final String accel_attr = "accelerator";
   static final String type_attr = "type";
+
+    /**
+     * menu nesting counter
+     * menus on menu bar do not use icons
+     */
+    static int nestCnt = 0;
 
   /**
    * The button group indexed by its name.
@@ -68,36 +76,26 @@ public class XMLMenuBuilder extends XMLWidgetBuilder
   ActionMap actions;  // actions used in current build process
   //MenuBarCtrl component;
 
-  /**
-   * Build a menu builder which operates on XML formatted data.
-   * 
-   * @param ref the reference point for properties location
-   */
-  public XMLMenuBuilder(Class ref)
-  {
-    //button_group = new Hashtable();
-    this.ref = ref;
-  }
-
 
   /**
    * Build a menu builder which operates on XML formatted data.
    * 
    * @param frame reference point for properties location
+   * @param actions array of UIAction objects to map to
    */
-  public XMLMenuBuilder(JFrame frame)
+  public XMLMenuBuilder(JFrame frame, ActionMap actions)
   {
-    this(frame.getClass());
+      ref = frame.getClass();
+      this.actions = actions;
   }
 
   /**
    * Read the input stream and build a menubar from it
    * 
    * @param url location of menu file
-   * @param actions array of UIAction objects to map to
    */
-  public JMenuBar buildFrom(URL url, ActionMap actions)
-  {
+    public JMenuBar buildFrom(URL url)
+    {
       if(url == null)
         FLog.log("XMLMenuBuilder", FLog.LOG_ERR, "buildFrom() - URL is NULL");
       FLog.log("XMLMenuBuilder", FLog.LOG_DEB, "buildFrom() - build from URL: " + url.toString());
@@ -108,13 +106,13 @@ public class XMLMenuBuilder extends XMLWidgetBuilder
           doc = builder.build(url);
           org.jdom.Element root = doc.getRootElement(), el;
 
-          // get the <head><link> tag for this file
+          // get the <headMagic><link> tag for this file
           el = root.getChild("head").getChild("link");
           // set the configuration contained in this node
           setConfiguration(el);
 
           // skip to the body
-          menubar = buildFrom(root.getChild("body").getChild("menubar"), actions);
+          menubar = buildFrom(root.getChild("body").getChild("menubar"));
       }
       catch (JDOMException e) {
         System.err.println(url + " is not well-formed.");
@@ -125,50 +123,56 @@ public class XMLMenuBuilder extends XMLWidgetBuilder
         System.err.println(" because " + e.getMessage());
       }
       return menubar;
-  }
-
-public JMenu buildMenu(org.jdom.Element element)
-{
-    JMenu menu = new JMenu();
-    //String my_id = element.getAttribute(id_attr).getValue();
-    menu.setText(getReferencedLabel(element, label_attr).trim());
-    menu.setActionCommand(element.getAttributeValue(id_attr, "NOT_FOUND"));
-
-    java.util.List lst = element.getContent();
-    Iterator it = lst.iterator();
-    while (it.hasNext()) {
-        Object o = it.next();
-        if(o instanceof Element) {
-            JComponent comp = buildComponent((Element)o);
-//            FLog.log("XMLMenuBuilder", FLog.LOG_DEB, "buildMenu() - adding menu item: " + comp.getClass().toString());
-            menu.add(comp);
-        }
     }
 
-    return menu;
-}
+    public JMenuBar buildFrom(String resource_file_name)
+    {
+        FLog.log("XMLMenuBuilder", FLog.LOG_DEB, "buildFrom() - open URL '" + resource_file_name + "'");
+        URL url = ref.getResource(resource_file_name);
+        return buildFrom(url);
+    }
 
-  public JMenuBar buildFrom(Element element, ActionMap actions)
-  {
-      if(!element.getName().equals("menubar")) {
+    public JMenuBar buildFrom(Element element)
+    {
+        if(!element.getName().equals("menubar")) {
 //          throw new Exception("XMLMenuBuilder.buildFrom() - element name should be <menubar>");
-          FLog.log("XMLMenuBuilder", FLog.LOG_ERR, "buildFrom() - element name should be <menubar>");
-      }
-      JMenuBar menubar = new JMenuBar();
-      this.actions = actions;
-      java.util.List lst = element.getContent();
-      Iterator it = lst.iterator();
-      while (it.hasNext()) {
-          Object o = it.next();
-          if(o instanceof Element) {
-              JMenu menu = buildMenu((Element)o);
-              menubar.add(menu);
-              //component.addItemByName(menu.getActionCommand(), menu);
-          }
-      }
+            FLog.log("XMLMenuBuilder", FLog.LOG_ERR, "buildFrom() - element name should be <menubar>");
+        }
+        JMenuBar menubar = new JMenuBar();
+        java.util.List lst = element.getContent();
+        Iterator it = lst.iterator();
+        while (it.hasNext()) {
+            Object o = it.next();
+            if(o instanceof Element) {
+                JMenu menu = buildMenu((Element)o);
+                menubar.add(menu);
+                //component.addItemByName(menu.getActionCommand(), menu);
+            }
+        }
 
-      return menubar;
-  }
+        return menubar;
+    }
+
+    public JMenu buildMenu(org.jdom.Element el)
+    {
+        nestCnt++;
+        JMenu menu = new JMenu();
+        finishMenuItem(menu, el);
+        if(nestCnt == 1) menu.setIcon(null); // menus on menu bar don't have icons
+
+        java.util.List lst = el.getContent();
+        Iterator it = lst.iterator();
+        while (it.hasNext()) {
+            Object o = it.next();
+            if(o instanceof Element) {
+                JComponent comp = buildComponent((Element)o);
+    //            FLog.log("XMLMenuBuilder", FLog.LOG_DEB, "buildMenu() - adding menu item: " + comp.getClass().toString());
+                menu.add(comp);
+            }
+        }
+        nestCnt--;
+        return menu;
+    }
 
     /**
     * Build the component at the current XML element and add to the parent.
@@ -256,50 +260,67 @@ public JMenu buildMenu(org.jdom.Element element)
 
     /**
     * Build a JMenuItem.
-    * @param current the element that describes the JMenuItem
+    * @param el the element that describes the JMenuItem
     * @return the built component
     */
-    protected JMenuItem buildMenuItem(Element current)
+    protected JMenuItem buildMenuItem(Element el)
     {
         JMenuItem item = null;
         Action action = null;
-        String s = current.getAttributeValue("action");
-        if(s != null) {
-            if ((action = (Action)actions.get(s)) != null) {
+        String act_id = el.getAttributeValue(action_id_attr);
+        if(act_id != null) {
+            if ((action = (Action)actions.get(act_id)) != null) {
                 item = new JMenuItem(action);
             }
             else {
-                item = new JMenuItem(s + " ACTION_NOT_FOUND");
+                item = new JMenuItem(act_id + " ACTION_NOT_FOUND");
                 item.setEnabled(false);
             }
         }
         if(item == null) {
             item = new JMenuItem();
-            finishMenuItem(item, current);
-            item.setFont(new Font("Helvetica", Font.PLAIN, 12));
+
+            finishMenuItem(item, el);
+            //item.setFont(new Font("Helvetica", Font.PLAIN, 12));
         }
+        if(item.getIcon() == null) item.setIcon(XMLWidgetBuilder.icoEmpty);
+        item.setMargin(new Insets(0, 0, 0, 0));
+        item.setIconTextGap(0);
+        //FLog.log("XMLMenuBuilder", FLog.LOG_DEB, "buildMenuItem() - new menu item label: " + item.getText() + " icon: " + item.getIcon());
         return item;
     }
 
-    private void finishMenuItem(JMenuItem item, Element current)
+    private void finishMenuItem(JMenuItem item, Element el)
     {
-        String label = getReferencedLabel(current, label_attr);
-
-        if (label.length() > 0) {
-            item.setText(label);
-            item.setName(label);
+        String s = getReferencedLabel(el, label_attr);
+        if(s.length() > 0) {
+            item.setText(s);
+            item.setName(s);
         }
-
-        label = getReferencedLabel(current, accel_attr);
-        if (label.length() > 0) item.setMnemonic(label.charAt(0));
+        // set mnemonic
+        s = el.getAttributeValue("mnemonic_attr", "");
+        if(s.length() > 0) {
+            s = s.toUpperCase();
+            char c = s.charAt(0);
+            int offset = c - 'A';
+            item.setMnemonic(KeyEvent.VK_A + offset);
+        }
+        // set icon
+        ImageIcon ico = null;
+        s = el.getAttributeValue("icon");
+        URL url = null;
+        if(s != null) url = ref.getResource(s);
+        if(url != null) ico = new ImageIcon(url);
+        if(ico == null || ico.getImageLoadStatus() != MediaTracker.COMPLETE) ico = XMLWidgetBuilder.icoEmpty;
+        if(ico != null) item.setIcon(ico);
     }
 
     public static void main(String[] args) throws Exception
     {
         FLog.logTreshold = FLog.LOG_ERR;
         javax.swing.JFrame frame = new javax.swing.JFrame("Foo bar");
-        XMLMenuBuilder builder = new XMLMenuBuilder(frame);
         ActionMap actions = new ActionMap();
+        XMLMenuBuilder builder = new XMLMenuBuilder(frame, actions);
         Action act = new AbstractAction("Quit") {
                     public void actionPerformed(ActionEvent e) {
                         System.gc();
@@ -307,8 +328,7 @@ public JMenu buildMenu(org.jdom.Element element)
                     }
                 };
         actions.put("appExit", act);
-        URL url = builder.getClass().getResource("menu1.xml");
-        frame.setJMenuBar(builder.buildFrom(url, actions));
+        frame.setJMenuBar(builder.buildFrom("menu1.xml"));
         frame.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
         frame.pack();
         frame.setVisible(true);
