@@ -26,13 +26,13 @@ endif
 
 export JAVA_HOME
 
-.PHONY: jar-xmlconf jar-monitor
+.PHONY: java-default
 
-utils-pass-local: jar-monitor jar-xmlconf 
+utils-pass-local: java-default
 
-jar-xmlconf jar-monitor:
+java-default:
 	$(ANT) -Djava_class_dir=$(USER_OBJS_DIR)/ -Djava_lib_dir=$(USER_BIN_DIR)/ \
-	       -buildfile $(srcdir)/build.xml $@
+	       -buildfile $(srcdir)/build.xml
 
 #clean-java:
 clean-custom:

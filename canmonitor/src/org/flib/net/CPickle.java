@@ -635,6 +635,8 @@ public class CPickle
         writeToFile(cpck.writePickleDefinition(s), out_dir, s + ".h");
         s = "fcpickle_impl"; if(gen_cpp) s += "_cc";
         writeToFile(cpck.writePickleImplementation(s), out_dir, s + ".h");
+        class_names = class_names.replaceAll("\\s", ""); // remove all white spaces
+        System.out.println("classnames: '" + class_names + "'");
         LinkedList names = new LinkedList();
         for(StringTokenizer stringTokenizer = new StringTokenizer(class_names, ","); stringTokenizer.hasMoreTokens();) {
             String class_name = stringTokenizer.nextToken();
@@ -781,7 +783,11 @@ public class CPickle
             "{\n" +
             "    FCPickleString(const char *str=\"\") : QString(str) {}\n" +
             "    int size() {return length();}\n" +
-            "    char operator[](int pos) {return ((const QString*)this)->operator[](pos);}\n" +
+            "#ifdef QT4\n" +
+            "    char operator[](int pos) const {return ((const QString*)this)->operator[](pos).toAscii();}\n" +
+            "#else\n" +
+            "    char operator[](int pos) const {return ((const QString*)this)->operator[](pos);}\n" +
+            "#endif\n" +
             "};\n" +
             "\n" +
             "#endif\n";
@@ -817,7 +823,7 @@ public class CPickle
         /*
         s += "/// get class name form the buffer\n";
         s += "/// @return zero terminated C string or NULL if error\n";
-        s += "inline const char* fpickle_getClassName(fpickle_class_name_t *class_def, uint8_t *buffer, int buff_len) {\n";
+        s += "inline const char* fpickle_getClassName(fpickle_class_name_t *class_def, const uint8_t *buffer, int buff_len) {\n";
         s += "    fpickle_class_def_t cn;\n";
         s += "    if(" + pickledClassDef_cname + "_unpickleObject(&cn, buffer, buff_len) < 0) return NULL;\n";
         s += "    return cn.className;\n";
@@ -869,18 +875,18 @@ public class CPickle
             s += "struct FCPickle {\n";
             s += "    /// get packet head form the buffer\n";
             s += "    /// @return number of used bytes or negative value if error\n";
-            s += "    static int getHead(fcpickle_packet_head_t &head, uint8_t *buffer, int buff_len) {\n";
+            s += "    static int getHead(fcpickle_packet_head_t &head, const uint8_t *buffer, int buff_len) {\n";
             s += "        return head.unpickle(buffer, buff_len);\n";
             s += "    }\n";
             s += "\n";
             s += "    /// get pickled class definition form the buffer\n";
             s += "    /// @return number of used bytes or negative value if error\n";
-            s += "    static int getClassDef(fcpickle_class_def_t &def, uint8_t *buffer, int buff_len) {\n";
+            s += "    static int getClassDef(fcpickle_class_def_t &def, const uint8_t *buffer, int buff_len) {\n";
             s += "        return def.unpickle(buffer, buff_len);\n";
             s += "    }\n";
             s += "\n";
             s += "    // use this function if you want to know pickled class name in incomming data\n";
-            s += "    static const char* getClassName(uint8_t *buffer, int buff_len) {\n";
+            s += "    static const char* getClassName(const uint8_t *buffer, int buff_len) {\n";
             s += "        if(buff_len <= FCPICKLE_PACKET_HEAD_SIZE) return \"\";\n";
             s += "        return (const char*)(buffer + FCPICKLE_PACKET_HEAD_SIZE + " + pickleOptions.arraySizeTypeLen + ");\n";
             s += "    }\n";
@@ -901,18 +907,18 @@ public class CPickle
             s += "\n";
             s += "/// get packet head form the buffer\n";
             s += "/// @return number of used bytes or negative value if error\n";
-            s += "static inline int fcpickle_getHead(fcpickle_packet_head_t *head, uint8_t *buffer, int buff_len) {\n";
+            s += "static inline int fcpickle_getHead(fcpickle_packet_head_t *head, const uint8_t *buffer, int buff_len) {\n";
             s += "    return " + pickledPacketHead_cname + "_unpickleObject(head, buffer, buff_len);\n";
             s += "}\n";
             s += "\n";
             s += "/// get pickled class definition form the buffer\n";
             s += "/// @return number of used bytes or negative value if error\n";
-            s += "static inline int fcpickle_getClassDef(fcpickle_class_def_t *def, uint8_t *buffer, int buff_len) {\n";
+            s += "static inline int fcpickle_getClassDef(fcpickle_class_def_t *def, const uint8_t *buffer, int buff_len) {\n";
             s += "    return " + pickledClassDef_cname + "_unpickleObject(def, buffer, buff_len);\n";
             s += "}\n";
             s += "\n";
             s += "// use this function if you want to know pickled class name in incomming data\n";
-            s += "static inline const char* fcpickle_getClassName(uint8_t *buffer, int buff_len) {\n";
+            s += "static inline const char* fcpickle_getClassName(const uint8_t *buffer, int buff_len) {\n";
             s += "    if(buff_len <= FCPICKLE_PACKET_HEAD_SIZE) return \"\";\n";
             s += "    return (const char*)(buffer + FCPICKLE_PACKET_HEAD_SIZE + " + pickleOptions.arraySizeTypeLen + ");\n";
             s += "}\n";
@@ -1009,9 +1015,9 @@ public class CPickle
             s += "    int getObjectBufferSize();\n";
             s += "    int getPacketBufferSize();\n";
             s += "    int pickle(uint8_t *buffer, int buff_len);\n";
-            s += "    int unpickle(uint8_t *buffer, int buff_len);\n";
+            s += "    int unpickle(const uint8_t *buffer, int buff_len);\n";
             s += "    int toNet(uint8_t *buffer, int buff_len);\n";
-            s += "    int fromNet(uint8_t *buffer, int buff_len);\n";
+            s += "    int fromNet(const uint8_t *buffer, int buff_len);\n";
             s += "};\n"; // end of C++ struct definition
         }
         else {
@@ -1070,9 +1076,9 @@ public class CPickle
             s += "int " + ccp.c_name + "_getObjectBufferSize(" + ccp.ctype_name + " *o);\n";
             s += "int " + ccp.c_name + "_getPacketBufferSize(" + ccp.ctype_name + " *o);\n";
             s += "int " + ccp.c_name + "_pickleObject(" + ccp.ctype_name + " *o, uint8_t *buffer, int buff_len);\n";
-            s += "int " + ccp.c_name + "_unpickleObject(" + ccp.ctype_name + " *o, uint8_t *buffer, int buff_len);\n";
+            s += "int " + ccp.c_name + "_unpickleObject(" + ccp.ctype_name + " *o, const uint8_t *buffer, int buff_len);\n";
             s += "int " + ccp.c_name + "_toNet(" + ccp.ctype_name + " *o, uint8_t *buffer, int buff_len);\n";
-            s += "int " + ccp.c_name + "_fromNet(" + ccp.ctype_name + " *o, uint8_t *buffer, int buff_len);\n";
+            s += "int " + ccp.c_name + "_fromNet(" + ccp.ctype_name + " *o, const uint8_t *buffer, int buff_len);\n";
             s += "\n";
             s += "#ifdef __cplusplus\n";
             s += "}\n";
@@ -1510,7 +1516,7 @@ public class CPickle
         s += "/// NOTE!! char* (String in Java) fields are backuped by buffer (no memory is allocated during loading)\n";
         s += "/// @return number of read bytes or negative value if error\n";
         if(gen_cpp) {
-            s += "int " + ccp.c_name + "::unpickle(uint8_t *buffer, int buff_len)\n";
+            s += "int " + ccp.c_name + "::unpickle(const uint8_t *buffer, int buff_len)\n";
             s += "{\n";
             s += "    size_t len = 0;\n";
             if(pickleOptions.debug_print) {
@@ -1582,7 +1588,7 @@ public class CPickle
             s += "    return len;\n";
         }
         else {
-            s += "int " + ccp.c_name + "_unpickleObject(" + ccp.ctype_name + " *o, uint8_t *buffer, int buff_len)\n";
+            s += "int " + ccp.c_name + "_unpickleObject(" + ccp.ctype_name + " *o, const uint8_t *buffer, int buff_len)\n";
             s += "{\n";
             s += "    int32_t len = 0;\n";
             if(pickleOptions.debug_print) {
@@ -1662,7 +1668,7 @@ public class CPickle
         s += "/// NOTE!! char* (String in Java) fields are backuped by buffer (no memory is allocated during loading)\n";
         s += "/// @return number of read bytes or negative value if error\n";
         if(gen_cpp) {
-            s += "int " + ccp.c_name + "::fromNet(uint8_t *buffer, int buff_len)\n";
+            s += "int " + ccp.c_name + "::fromNet(const uint8_t *buffer, int buff_len)\n";
             s += "{\n";
             s += "    size_t len = 0;\n";
             s += "    int i;\n";
@@ -1681,7 +1687,7 @@ public class CPickle
             s += "}\n";
         }
         else {
-            s += "int " + ccp.c_name + "_fromNet(" + ccp.ctype_name + " *o, uint8_t *buffer, int buff_len)\n";
+            s += "int " + ccp.c_name + "_fromNet(" + ccp.ctype_name + " *o, const uint8_t *buffer, int buff_len)\n";
             s += "{\n";
             s += "    int32_t len = 0, i;\n";
             s += "    " + pickledPacketHead_cname + "_t head;\n";

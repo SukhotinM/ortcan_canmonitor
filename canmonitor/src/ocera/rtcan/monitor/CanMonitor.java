@@ -34,7 +34,7 @@ class LogTextAreaDocumentFilter extends DocumentFilter
     private int charGap;
 
     LogTextAreaDocumentFilter() {
-        this(1000000);
+        this(1000);
     }
     LogTextAreaDocumentFilter(int max_chars) {
         maxChars = max_chars;
@@ -544,28 +544,28 @@ public class CanMonitor extends JFrame implements Runnable
         _6.add(_10, new com.intellij.uiDesigner.core.GridConstraints(1, 7, 1, 1, 8, 1, 6, 0, null, null, null));
         final JLabel _11;
         _11 = new JLabel();
-        _11.setText("ID");
         _11.setIconTextGap(0);
+        _11.setText("ID");
         _6.add(_11, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, 8, 0, 0, 0, null, null, null));
         final JLabel _12;
         _12 = new JLabel();
-        _12.setText("byte[0]");
         _12.setIconTextGap(0);
+        _12.setText("byte[0]");
         _6.add(_12, new com.intellij.uiDesigner.core.GridConstraints(0, 1, 1, 1, 8, 0, 0, 0, null, null, null));
         final JLabel _13;
         _13 = new JLabel();
-        _13.setText("byte[4]");
         _13.setIconTextGap(0);
+        _13.setText("byte[4]");
         _6.add(_13, new com.intellij.uiDesigner.core.GridConstraints(0, 5, 1, 1, 8, 0, 0, 0, null, null, null));
         final JLabel _14;
         _14 = new JLabel();
-        _14.setText("byte[6]");
         _14.setIconTextGap(0);
+        _14.setText("byte[6]");
         _6.add(_14, new com.intellij.uiDesigner.core.GridConstraints(0, 7, 1, 1, 8, 0, 0, 0, null, null, null));
         final JLabel _15;
         _15 = new JLabel();
-        _15.setText("byte[2]");
         _15.setIconTextGap(0);
+        _15.setText("byte[2]");
         _6.add(_15, new com.intellij.uiDesigner.core.GridConstraints(0, 3, 1, 1, 8, 0, 0, 0, null, null, null));
         final JTextField _16;
         _16 = new JTextField();
@@ -573,23 +573,23 @@ public class CanMonitor extends JFrame implements Runnable
         _6.add(_16, new com.intellij.uiDesigner.core.GridConstraints(1, 3, 1, 1, 8, 1, 6, 0, null, null, null));
         final JLabel _17;
         _17 = new JLabel();
-        _17.setText("byte[1]");
         _17.setIconTextGap(0);
+        _17.setText("byte[1]");
         _6.add(_17, new com.intellij.uiDesigner.core.GridConstraints(0, 2, 1, 1, 8, 0, 0, 0, null, null, null));
         final JLabel _18;
         _18 = new JLabel();
-        _18.setText("byte[3]");
         _18.setIconTextGap(0);
+        _18.setText("byte[3]");
         _6.add(_18, new com.intellij.uiDesigner.core.GridConstraints(0, 4, 1, 1, 8, 0, 0, 0, null, null, null));
         final JLabel _19;
         _19 = new JLabel();
-        _19.setText("byte[5]");
         _19.setIconTextGap(0);
+        _19.setText("byte[5]");
         _6.add(_19, new com.intellij.uiDesigner.core.GridConstraints(0, 6, 1, 1, 8, 0, 0, 0, null, null, null));
         final JLabel _20;
         _20 = new JLabel();
-        _20.setText("byte[7]");
         _20.setIconTextGap(0);
+        _20.setText("byte[7]");
         _6.add(_20, new com.intellij.uiDesigner.core.GridConstraints(0, 8, 1, 1, 8, 0, 0, 0, null, null, null));
         final JTextField _21;
         _21 = new JTextField();
@@ -631,8 +631,8 @@ public class CanMonitor extends JFrame implements Runnable
         final JButton _29;
         _29 = new JButton();
         btClearLog = _29;
-        _29.setText("Clear log");
         _29.setVerticalAlignment(0);
+        _29.setText("Clear log");
         _27.add(_29, new com.intellij.uiDesigner.core.GridConstraints(0, 2, 1, 1, 1, 1, 3, 1, null, null, null));
         final com.intellij.uiDesigner.core.Spacer _30;
         _30 = new com.intellij.uiDesigner.core.Spacer();

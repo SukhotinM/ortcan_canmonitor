@@ -1,0 +1,21 @@
+#!/bin/sh
+
+#example of usage cpickle utility
+
+CANMON_DIR=`dirname $0`
+
+if [ -z "$JAVA_HOME" ] ; then
+  export JAVA_HOME=/opt/java
+fi
+
+# -ea - enble assertions
+$JAVA_HOME/bin/java -ea \
+  -cp $CANMON_DIR/lib/cpickle.jar:$CANMON_DIR/lib/canmonitor.jar \
+  org.flib.net.CPickle \
+  -c \
+  "ocera.rtcan.SDOUploadRequestMsg,\
+  ocera.rtcan.SDOUploadConfirmMsg,\
+  ocera.rtcan.SDODownloadRequestMsg,\
+  ocera.rtcan.SDODownloadConfirmMsg,\
+  ocera.rtcan.CANDtgMsg" $@
+  
