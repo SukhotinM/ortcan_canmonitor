@@ -5,17 +5,67 @@
 
     <property name="src" location="src"/>
     <property name="class" location="class"/>
-    <property name="dist"  location="dist"/>
+    <property name="lib"  location="lib"/>
+    <property name="jar.jdom"  location="lib/jdom.jar"/>
+    <property name="path.xmlconf" value="ocera/xmlconf"/>
 
-    <target name="build" >
+    <target name="build" depends="compile">
+    </target>
+
+    <target name="xmlconf" depends="jar-xmlconf">
+    </target>
+
+    <target name="prepare-compile">
+         <mkdir dir="${class}"/>
+     </target>
+
+    <target name="compile" depends="prepare-compile">
         <javac srcdir="${src}" destdir="${class}"
+            classpath="${jar.jdom}"
             debug="true"
             optimize="false"
-            includes="**/*.java"
+            includes="ocera/**/*.java"
             />
     </target>
+
+    <target name="compile-xmlconf" depends="prepare-compile">
+        <mkdir dir="${class}/${path.xmlconf}/resources"/>
+        <!-- Copy the toolbar icons images -->
+        <copy todir="${class}/${path.xmlconf}/resources">
+            <fileset dir="${src}/${path.xmlconf}/resources" >
+                <include name="*.gif"/>
+            </fileset>
+        </copy>
+        <javac srcdir="${src}" destdir="${class}"
+            classpath="${jar.jdom}"
+            debug="true"
+            optimize="false"
+            includes="${path.xmlconf}/XmlConf.java"
+            />
+    </target>
+
+    <target name="prepare-jar-xmlconf" depends="clean">
+    </target>
+    <!-- Generate the jar file -->
+    <target name="jar-xmlconf" depends="prepare-jar-xmlconf, compile-xmlconf">
+        <jar jarfile="${lib}/xmlconf.jar" basedir="${class}"
+            manifest="${src}/ocera/xmlconf/manifest">
+            <!-- Do not include test files in the runtime jar
+            <exclude name="**/Test*.*"/>
+            <exclude name="**/test*.*"/>
+            -->
+        </jar>
+    </target>
+
     <target name="run" >
         <exec dir="." executable="canmonitor" os="Linux"/>
     </target>
+
+    <target name="clean" >
+         <delete quiet="true">
+             <fileset dir="${class}" includes="**/*.class" defaultexcludes="no"/>
+         </delete>
+    </target>
+
 </project>
 

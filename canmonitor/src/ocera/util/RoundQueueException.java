@@ -9,7 +9,7 @@ package ocera.util;
 
 public class RoundQueueException extends Exception
 {
-    RoundQueueException() {super();}
+//    RoundQueueException() {super();}
     RoundQueueException(String msg) {super(msg);}
 }
 

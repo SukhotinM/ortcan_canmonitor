@@ -79,6 +79,18 @@ public class StringParser {
 		}
 		return sa;
 	}
+
+    /**
+     * Method cut.
+     * @param s cutted string
+     * @param delim field delimiter
+     * @return behaves exactly like {@link #cut(String s)} but it sets fieldDelimiter to the <code>delim</code> before cutting.
+     */
+    public String[] cut(String s, char delim)
+    {
+        fieldDelimiter = delim;
+        return cut(s);
+    }
 //--------------------------------------------------------------
 	public String toString(String[] sa)
 	{

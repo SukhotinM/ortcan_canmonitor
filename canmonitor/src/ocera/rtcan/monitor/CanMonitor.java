@@ -184,7 +184,8 @@ public class CanMonitor extends JFrame implements Runnable {
         act = new AbstractAction("Quit") {
                     public void actionPerformed(ActionEvent e) {
                         cleanUp();
-                        System.exit(0);
+                        System.gc();
+//                        System.exit(0);
                     }
                 };
         actions.put("Quit", act);
@@ -355,7 +356,7 @@ public class CanMonitor extends JFrame implements Runnable {
         //==========================================================
         this.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
-                cleanUp();
+                actions.get("Quit").actionPerformed(null);
             }
         });
     }
