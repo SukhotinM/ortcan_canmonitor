@@ -158,9 +158,9 @@ public class FString
         int v = val;
         if(v < 0) v += 256;
         int d = v/16;
-        if(d >= 0xA) s += (char)(d-0xA + 'A'); else s += (char)(d+'0');
+        if(d >= 0xA) s += (char)(d-0xA + 'A'); else s += (char)(d + '0');
         d = v%16;
-        if(d >= 0xA) s += (char)(d-0xA + 'A'); else s += (char)(d+'0');
+        if(d >= 0xA) s += (char)(d-0xA + 'A'); else s += (char)(d + '0');
         return s;
         //return Integer.toString( ( val & 0xff ) + 0x100, 16 /* radix */ ) .substring( 1 );
     }
@@ -171,7 +171,7 @@ public class FString
         for (int i = 0; i < bytes.length; i++) {
             byte b = bytes[i];
             if(i > 0) s += " ";
-            if(b > 0x20) s += " " + (char)b;
+            if(b > ' ' && b < 'z') s += " " + (char)b;
             else s += byte2Hex(b);
         }
         return s;

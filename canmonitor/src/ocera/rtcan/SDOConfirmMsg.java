@@ -30,10 +30,10 @@ public class SDOConfirmMsg extends SDOMsgBase
         String s = "SDO confirmation - ";
         s += super.toString();
         if(type == SDOConfirmMsg.MSG_ABORT) {
-            s += "\nABORT: " + code + " - '" + errmsg + "'";
+            s += "ABORT: " + code + " - '" + errmsg + "'\n";
         }
         else if(type == SDOConfirmMsg.MSG_ERROR) {
-            s += "\nERROR: " + code + " - '" + errmsg + "'";
+            s += "ERROR: " + code + " - '" + errmsg + "'\n";
         }
         return s;
     }

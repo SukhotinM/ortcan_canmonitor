@@ -19,8 +19,8 @@ public class CANDtgMsg
     public final static int DATA_LEN_MAX = 8;
     public int id;
     public short length;
-    final public static int cpickle_metadata_arraysize_data = DATA_LEN_MAX;
-    public byte data[] = new byte[cpickle_metadata_arraysize_data];
+    final public static int data_ARRAY_SIZE = DATA_LEN_MAX;
+    public byte data[] = new byte[data_ARRAY_SIZE];
 
     /**
      * Converts CAM messsage to the string
@@ -31,7 +31,7 @@ public class CANDtgMsg
             if(i > 0) ret += " ";
             ret += FString.byte2Hex(data[i]);
         }
-        ret += "]}";
+        ret += "]}\n";
         return ret;
     }
 }

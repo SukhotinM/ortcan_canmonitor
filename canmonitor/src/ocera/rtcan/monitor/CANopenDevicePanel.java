@@ -10,6 +10,7 @@ import ocera.util.FFile;
 import ocera.util.StringParser;
 
 import javax.swing.*;
+import javax.swing.text.AbstractDocument;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.DocumentListener;
@@ -258,6 +259,12 @@ public class CANopenDevicePanel extends JPanel
             public void removeUpdate(DocumentEvent e) {update();}
             void update() {refreshPanel();}
         });
+
+        //==========================================================
+        //        JTextArea logs listenners
+        //==========================================================
+        int logsize = FString.toInt(mainApp.xmlConfig.getValue("/logging/logscreensize", "1000000"));
+        ((AbstractDocument)txtLog.getDocument()).setDocumentFilter(new LogTextAreaDocumentFilter(logsize));
     }
 
     private void enableControls()
@@ -510,8 +517,8 @@ public class CANopenDevicePanel extends JPanel
         final JTabbedPane _1;
         _1 = new JTabbedPane();
         pane = _1;
-        _1.setTabLayoutPolicy(0);
         _1.setTabPlacement(3);
+        _1.setTabLayoutPolicy(0);
         final JPanel _2;
         _2 = new JPanel();
         _2.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));

@@ -26,10 +26,10 @@ public class SDOMsgBase
     public String toString()
     {
         String s = "";
-        s += "node: " + node + " ";
-        s += "object: " + FString.int2HexStr(index, 4) + ":" + FString.int2HexStr(subindex, 2) + " ";
-        s += "srvcli cobid: " + FString.int2HexStr(srvcliCobId) + " ";
-        s += "clisrv cobid: " + FString.int2HexStr(clisrvCobId);
+        s += "node: " + node + "\n";
+        s += "object: " + FString.int2HexStr(index, 4) + ":" + FString.int2HexStr(subindex, 2) + "\n";
+        s += "srvcli cobid: " + FString.int2HexStr(srvcliCobId) + "\n";
+        s += "clisrv cobid: " + FString.int2HexStr(clisrvCobId) + "\n";
         return s;
     }
 }

@@ -14,6 +14,9 @@ import ocera.rtcan.CanMonClient;
 import ocera.rtcan.CANDtgMsg;
 
 import javax.swing.*;
+import javax.swing.text.*;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.DocumentEvent;
 import java.io.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -25,6 +28,28 @@ import org.jx.xmlgui.XMLToolbarBuilder;
 import org.flib.FLog;
 import org.flib.FString;
 
+class LogTextAreaDocumentFilter extends DocumentFilter
+{
+    private int maxChars;
+    private int charGap;
+
+    LogTextAreaDocumentFilter() {
+        this(1000000);
+    }
+    LogTextAreaDocumentFilter(int max_chars) {
+        maxChars = max_chars;
+        charGap = maxChars / 3;
+    }
+
+    public void insertString(FilterBypass fb, int offs, String str, AttributeSet a) throws BadLocationException
+    {
+        Document doc = fb.getDocument();
+        if(doc.getLength() + str.length() > maxChars) {
+            doc.remove(0, charGap);
+        }
+        super.insertString(fb, doc.getLength(), str, a);
+    }
+}
 
 public class CanMonitor extends JFrame implements Runnable
 {
@@ -351,7 +376,7 @@ public class CanMonitor extends JFrame implements Runnable
                     if(s.length() == 0) break;
                     msg.data[msg.length++] = (byte) FString.toInt(s, 10);
                 }
-                txtLog.append("SENDING:\t" + msg + "\n");
+                txtLog.append("SENDING:\t" + msg);
                 canConn.send(msg);
             }
         });
@@ -361,6 +386,12 @@ public class CanMonitor extends JFrame implements Runnable
                 txtLog.setText("");
             }
         });
+
+        //==========================================================
+        //        JTextArea logs listenners
+        //==========================================================
+        int logsize = FString.toInt(xmlConfig.getValue("/logging/logscreensize", "1000000"));
+        ((AbstractDocument)txtLog.getDocument()).setDocumentFilter(new LogTextAreaDocumentFilter(logsize));
 
         //==========================================================
         //        JFrame listenners
@@ -439,10 +470,10 @@ public class CanMonitor extends JFrame implements Runnable
             Object o = canConn.readQueue.remove(RoundQueue.NO_BLOCKING);
             if(o == null) break;
             //FLog.log("CanMonitor", FLog.LOG_DEB, "received CAN message " + s);
-            msgCount++;
 
             if(o instanceof CANDtgMsg) {
-                if(cbxShowRoughMessages.isSelected()) txtLog.append("RECEIVE[" + msgCount + "]:\t" + o + "\n");
+                msgCount++;
+                if(cbxShowRoughMessages.isSelected()) txtLog.append("RECEIVE[" + msgCount + "]:\t" + o);
             }
             else {
                 // scan all CANopen devices
@@ -474,8 +505,8 @@ public class CanMonitor extends JFrame implements Runnable
         final JTabbedPane _1;
         _1 = new JTabbedPane();
         tabPane = _1;
-        _1.setTabPlacement(1);
         _1.setTabLayoutPolicy(0);
+        _1.setTabPlacement(1);
         final JPanel _2;
         _2 = new JPanel();
         _2.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(3, 1, new Insets(3, 3, 0, 0), 3, -1));
@@ -513,28 +544,28 @@ public class CanMonitor extends JFrame implements Runnable
         _6.add(_10, new com.intellij.uiDesigner.core.GridConstraints(1, 7, 1, 1, 8, 1, 6, 0, null, null, null));
         final JLabel _11;
         _11 = new JLabel();
-        _11.setIconTextGap(0);
         _11.setText("ID");
+        _11.setIconTextGap(0);
         _6.add(_11, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, 8, 0, 0, 0, null, null, null));
         final JLabel _12;
         _12 = new JLabel();
-        _12.setIconTextGap(0);
         _12.setText("byte[0]");
+        _12.setIconTextGap(0);
         _6.add(_12, new com.intellij.uiDesigner.core.GridConstraints(0, 1, 1, 1, 8, 0, 0, 0, null, null, null));
         final JLabel _13;
         _13 = new JLabel();
-        _13.setIconTextGap(0);
         _13.setText("byte[4]");
+        _13.setIconTextGap(0);
         _6.add(_13, new com.intellij.uiDesigner.core.GridConstraints(0, 5, 1, 1, 8, 0, 0, 0, null, null, null));
         final JLabel _14;
         _14 = new JLabel();
-        _14.setIconTextGap(0);
         _14.setText("byte[6]");
+        _14.setIconTextGap(0);
         _6.add(_14, new com.intellij.uiDesigner.core.GridConstraints(0, 7, 1, 1, 8, 0, 0, 0, null, null, null));
         final JLabel _15;
         _15 = new JLabel();
-        _15.setIconTextGap(0);
         _15.setText("byte[2]");
+        _15.setIconTextGap(0);
         _6.add(_15, new com.intellij.uiDesigner.core.GridConstraints(0, 3, 1, 1, 8, 0, 0, 0, null, null, null));
         final JTextField _16;
         _16 = new JTextField();
@@ -542,23 +573,23 @@ public class CanMonitor extends JFrame implements Runnable
         _6.add(_16, new com.intellij.uiDesigner.core.GridConstraints(1, 3, 1, 1, 8, 1, 6, 0, null, null, null));
         final JLabel _17;
         _17 = new JLabel();
-        _17.setIconTextGap(0);
         _17.setText("byte[1]");
+        _17.setIconTextGap(0);
         _6.add(_17, new com.intellij.uiDesigner.core.GridConstraints(0, 2, 1, 1, 8, 0, 0, 0, null, null, null));
         final JLabel _18;
         _18 = new JLabel();
-        _18.setIconTextGap(0);
         _18.setText("byte[3]");
+        _18.setIconTextGap(0);
         _6.add(_18, new com.intellij.uiDesigner.core.GridConstraints(0, 4, 1, 1, 8, 0, 0, 0, null, null, null));
         final JLabel _19;
         _19 = new JLabel();
-        _19.setIconTextGap(0);
         _19.setText("byte[5]");
+        _19.setIconTextGap(0);
         _6.add(_19, new com.intellij.uiDesigner.core.GridConstraints(0, 6, 1, 1, 8, 0, 0, 0, null, null, null));
         final JLabel _20;
         _20 = new JLabel();
-        _20.setIconTextGap(0);
         _20.setText("byte[7]");
+        _20.setIconTextGap(0);
         _6.add(_20, new com.intellij.uiDesigner.core.GridConstraints(0, 8, 1, 1, 8, 0, 0, 0, null, null, null));
         final JTextField _21;
         _21 = new JTextField();

@@ -22,14 +22,14 @@ public class SDOUploadConfirmMsg extends SDOConfirmMsg
     public String toString()
     {
         String s = "UPLOAD ";
-        s += super.toString() + "\n";
+        s += super.toString();
         if(type == SDOConfirmMsg.MSG_OK) {
-            s += "\tdata: [";
+            s += "data: [";
             for(int i = 0; i < data.length; i++) {
                 if(i > 0) s += " ";
                 s += FString.byte2Hex(data[i]);
             }
-            s += "]";
+            s += "]\n";
         }
         return s;
     }

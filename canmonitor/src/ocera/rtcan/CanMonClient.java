@@ -62,7 +62,7 @@ public class CanMonClient implements Runnable
         outSockStream = null;
         errMsg = "OK";
         if(canSocket != null) {
-            FLog.logcont("CanMonitor", FLog.LOG_INF,  "disconnecting from " + canSocket.getInetAddress());
+            FLog.logcont("CanMonClient", FLog.LOG_INF,  "disconnecting from " + canSocket.getInetAddress());
             try {
                 canSocket.close();
             } catch(IOException e) {
@@ -95,7 +95,7 @@ public class CanMonClient implements Runnable
         errMsg = "";
         try {
             InetAddress addr = InetAddress.getByName(ip);
-            FLog.log("CanMonitor", FLog.LOG_INF,  "connecting to " + addr);
+            FLog.log("CanMonClient", FLog.LOG_INF,  "connecting to " + addr);
             try {
                 if(port == 0) port = DEFAULT_PORT;
                 canSocket = new Socket(addr, port);
@@ -116,7 +116,7 @@ public class CanMonClient implements Runnable
         } catch(UnknownHostException e) {
             errMsg = "ERROR: unknown host.";
         }
-        FLog.log("CanMonitor", FLog.LOG_INF,  errMsg);
+        FLog.log("CanMonClient", FLog.LOG_INF,  errMsg);
         return ret;
     }
 
@@ -146,12 +146,12 @@ public class CanMonClient implements Runnable
             ret = data.length;
         } catch(CPickleException e) {
             errMsg = "ERROR: PICKLE - " + e.getMessage();
-            FLog.log("CanMonitor", FLog.LOG_INF,  errMsg);
+            FLog.log("CanMonClient", FLog.LOG_INF,  errMsg);
             e.printStackTrace();
         }
         catch(Exception e) {
             errMsg = "ERROR: unsuccesfull write to the socket - " + e.getMessage();
-            FLog.log("CanMonitor", FLog.LOG_INF,  errMsg);
+            FLog.log("CanMonClient", FLog.LOG_INF,  errMsg);
             e.printStackTrace();
         }
         return ret;
@@ -167,16 +167,17 @@ public class CanMonClient implements Runnable
         while(!terminateReadThread) {
             try {
                 byte packet[] = pck.readObjectPacket(inSockStream);
-                FLog.log("CanMonitor", FLog.LOG_DEB, "New data from socket received: " + FString.bytes2String(packet));
+                FLog.log("CanMonClient", FLog.LOG_DEB, "New data from socket received: " + FString.bytes2String(packet));
+                FLog.log("CanMonClient", FLog.LOG_DEB, "--------------------------------");
                 Object o = pck.fromNet(packet);
-                FLog.log("CanMonitor", FLog.LOG_INF, "New data from socket received: " + o.toString());
+                FLog.log("CanMonClient", FLog.LOG_INF, "\t" + o.toString());
                 if (guiUpdate != null) {
                     // send object to the monitor msg queue
                     readQueue.append(o);
                 }
             }
             catch (CPickleException e) {
-                FLog.log("CanMonitor", FLog.LOG_ERR, "ERROR: invalid data received - " + e.getMessage());
+                FLog.log("CanMonClient", FLog.LOG_ERR, "ERROR: invalid data received - " + e.getMessage());
             }
             catch (IOException e) {
                 if(!terminateReadThread) FLog.log(getClass().getName(), FLog.LOG_ERR, e.getMessage());
@@ -185,7 +186,7 @@ public class CanMonClient implements Runnable
                 SwingUtilities.invokeLater(guiUpdate);
             }
         }
-        FLog.log("CanMonitor", FLog.LOG_MSG, "socket closed.");
+        FLog.log("CanMonClient", FLog.LOG_MSG, "socket closed.");
     }
 }
 

@@ -19,10 +19,11 @@ public class SDODownloadConfirmMsg extends SDOConfirmMsg
     public String toString()
     {
         String s = "DOWNLOAD ";
-        s += super.toString() + "\n";
+        s += super.toString();
         if(type == SDOConfirmMsg.MSG_OK) {
             s += "OK";
         }
+        s += "\n";
         return s;
     }
 }

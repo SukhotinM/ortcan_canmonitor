@@ -22,13 +22,13 @@ public class SDODownloadRequestMsg extends SDOMsgBase
     public String toString()
     {
         String s = "SDO download request - ";
-        s += super.toString() + "\n";
+        s += super.toString();
         s += "data: [";
         for(int i = 0; i < data.length; i++) {
             if(i > 0) s += " ";
             s += FString.int2HexStr(data[i], 2);
         }
-        s += "]";
+        s += "]\n";
         return s;
     }
 }
