@@ -10,6 +10,7 @@ package ocera.rtcan.monitor;
 import javax.swing.*;
 import ocera.xmlconf.*;
 import ocera.util.xmlconfig.XmlConfig;
+import ocera.rtcan.monitor.resources.VImage;
 
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowAdapter;
@@ -29,7 +30,7 @@ public class ConfigDialog extends JDialog
         Container c = getContentPane();
         c.setLayout(new BorderLayout());
         c.add(xcPanel, BorderLayout.CENTER);
-        JButton btExit = new JButton("Save & Exit");
+        JButton btExit = new JButton("Save & Exit", new VImage());
         btExit.setAlignmentX(1);
         JPanel p = new JPanel();
         p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
