@@ -7,6 +7,7 @@
     <property name="class" location="class"/>
     <property name="lib"  location="lib"/>
     <property name="jar.jdom"  location="lib/jdom.jar"/>
+    <property name="path.monitor" value="ocera/rtcan/monitor"/>
     <property name="path.xmlconf" value="ocera/xmlconf"/>
 
     <target name="build" depends="compile">
@@ -28,12 +29,45 @@
             />
     </target>
 
+    <target name="compile-monitor" depends="prepare-compile">
+        <mkdir dir="${class}/${path.monitor}/resources"/>
+        <!-- Copy the toolbar icons images -->
+        <copy todir="${class}/${path.monitor}/resources">
+            <fileset dir="${src}/${path.monitor}/resources" >
+                <include name="*.gif"/>
+                <include name="*.png"/>
+                <include name="*.conf.xml"/>
+            </fileset>
+        </copy>
+        <javac srcdir="${src}" destdir="${class}"
+            classpath="${jar.jdom}"
+            debug="true"
+            optimize="false"
+            includes="${path.monitor}/CanMonitor.java"
+            />
+    </target>
+
+    <target name="prepare-jar-monitor" depends="clean">
+    </target>
+    <!-- Generate the jar file -->
+    <target name="jar-monitor" depends="prepare-jar-monitor, compile-monitor">
+        <jar jarfile="${lib}/canmonitor.jar" basedir="${class}"
+            manifest="${src}/${path.monitor}/manifest">
+            <!-- Do not include test files in the runtime jar
+            <exclude name="**/Test*.*"/>
+            <exclude name="**/test*.*"/>
+            -->
+        </jar>
+    </target>
+
     <target name="compile-xmlconf" depends="prepare-compile">
         <mkdir dir="${class}/${path.xmlconf}/resources"/>
         <!-- Copy the toolbar icons images -->
         <copy todir="${class}/${path.xmlconf}/resources">
             <fileset dir="${src}/${path.xmlconf}/resources" >
                 <include name="*.gif"/>
+                <include name="*.png"/>
+                <include name="*.conf.xml"/>
             </fileset>
         </copy>
         <javac srcdir="${src}" destdir="${class}"
@@ -49,7 +83,7 @@
     <!-- Generate the jar file -->
     <target name="jar-xmlconf" depends="prepare-jar-xmlconf, compile-xmlconf">
         <jar jarfile="${lib}/xmlconf.jar" basedir="${class}"
-            manifest="${src}/ocera/xmlconf/manifest">
+            manifest="${src}/${path.xmlconf}/manifest">
             <!-- Do not include test files in the runtime jar
             <exclude name="**/Test*.*"/>
             <exclude name="**/test*.*"/>
@@ -57,7 +91,7 @@
         </jar>
     </target>
 
-    <target name="run" >
+    <target name="run"  depends="jar-monitor">
         <exec dir="." executable="canmonitor" os="Linux"/>
     </target>
 

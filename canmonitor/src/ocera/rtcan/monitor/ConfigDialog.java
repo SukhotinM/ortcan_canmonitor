@@ -10,13 +10,13 @@ package ocera.rtcan.monitor;
 import javax.swing.*;
 import ocera.xmlconf.*;
 import ocera.util.xmlconfig.XmlConfig;
-import ocera.rtcan.monitor.resources.VImage;
 
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.awt.*;
+import java.net.URL;
 
 public class ConfigDialog extends JDialog
 {
@@ -30,7 +30,8 @@ public class ConfigDialog extends JDialog
         Container c = getContentPane();
         c.setLayout(new BorderLayout());
         c.add(xcPanel, BorderLayout.CENTER);
-        JButton btExit = new JButton("Save & Exit", new VImage());
+        URL url = this.getClass().getResource("resources/ok.png");
+        JButton btExit = new JButton("Save & Exit", new ImageIcon(url));
         btExit.setAlignmentX(1);
         JPanel p = new JPanel();
         p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
