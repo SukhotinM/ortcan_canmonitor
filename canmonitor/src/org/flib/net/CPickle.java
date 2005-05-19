@@ -1095,7 +1095,8 @@ public class CPickle
         String ident = "    ";
         String c_this = "";
         String s = "";
-        if(pickleOptions.generate_cpp_code) {
+        boolean gen_cpp = pickleOptions.generate_cpp_code;
+        if(gen_cpp) {
             s += ident + "void _init()\n";
         }
         else {
@@ -1110,6 +1111,13 @@ public class CPickle
         s += ident + "{\n";
         try {
             Object constructor_o = ccp.thisclass.newInstance();
+            if(!gen_cpp) {
+                // for C structures, super class constructor have to be called explicitly
+                if(ccp.superclass != null) {
+                    s += "// init superclass\n";
+                    s += "    " + ccp.sc_name + "_init(&(o->super));\n";
+                }
+            }
             for(int i = 0; i < flds.length; i++) {
                 Field fld = flds[i];
                 Class type = fld.getType();
