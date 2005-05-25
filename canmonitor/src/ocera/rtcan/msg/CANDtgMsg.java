@@ -6,7 +6,7 @@
  * @author Frantisek Vacek, vacek@rtime.felk.cvut.cz
  */
 
-package ocera.rtcan;
+package ocera.rtcan.msg;
 
 import org.flib.FString;
 

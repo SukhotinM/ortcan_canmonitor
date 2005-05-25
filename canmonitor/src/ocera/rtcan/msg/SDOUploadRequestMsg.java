@@ -1,4 +1,4 @@
-package ocera.rtcan;
+package ocera.rtcan.msg;
 
 /**
  * ocera.rtcan.SDOUploadRequestMsg

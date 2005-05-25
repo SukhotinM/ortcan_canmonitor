@@ -1,4 +1,4 @@
-package ocera.rtcan;
+package ocera.rtcan.msg;
 
 import org.flib.FString;
 

@@ -11,7 +11,7 @@ import ocera.util.xmlconfig.XmlConfig;
 import ocera.util.*;
 import ocera.msg.*;
 import ocera.rtcan.CanMonClient;
-import ocera.rtcan.CANDtgMsg;
+import ocera.rtcan.msg.*;
 
 import javax.swing.*;
 import javax.swing.text.*;
@@ -432,6 +432,12 @@ public class CanMonitor extends JFrame implements Runnable
 
     public void init()
     {
+        // dummy objects, just for experiments
+        // DO NOT FRGET TO DELETE THEM
+        ServiceSetRawMsgParamsConfirm s1 = new ServiceSetRawMsgParamsConfirm();
+        ServiceSetRawMsgParamsRequest s2 = new ServiceSetRawMsgParamsRequest();
+        // DO NOT FRGET TO DELETE THEM
+        
         canConn.setGuiUpdate(this);
 //        canConn.connect(serverAddr, 0);
 

@@ -1,11 +1,10 @@
-package ocera.rtcan;
+package ocera.rtcan.msg;
 
-import org.flib.FString;
 
 /**
- * ocera.rtcan.monitor.SDOUploadRequestMsg
+ * ocera.rtcan.monitor.SDODownloadConfirmMsg
  * <p/>
- * (C) Copyright 1:54:04 PM by Frantisek Vacek - Originator
+ * (C) Copyright 10:58:32 AM by Frantisek Vacek - Originator
  * <p/>
  * The software is distributed under the Gnu General Public License.
  * See file COPYING for details.
@@ -15,22 +14,16 @@ import org.flib.FString;
  * do not accept this condition, they can delete this statement
  * and only GNU license will apply.
  */
-public class SDOUploadConfirmMsg extends SDOConfirmMsg
+public class SDODownloadConfirmMsg extends SDOConfirmMsg
 {
-    public byte[] data = new byte[0];
-
     public String toString()
     {
-        String s = "UPLOAD ";
+        String s = "DOWNLOAD ";
         s += super.toString();
         if(type == SDOConfirmMsg.MSG_OK) {
-            s += "data: [";
-            for(int i = 0; i < data.length; i++) {
-                if(i > 0) s += " ";
-                s += FString.byte2Hex(data[i]);
-            }
-            s += "]\n";
+            s += "OK";
         }
+        s += "\n";
         return s;
     }
 }

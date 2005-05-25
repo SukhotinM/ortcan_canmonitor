@@ -133,8 +133,10 @@
         <jar jarfile="${lib}/cpickle.jar" basedir="${class}"
             manifest="${src}/${path.cpickle}/manifest">
         </jar>
+	<!-- 
         <copy todir="${java_lib_dir}" file="cpickle-canmsgs"/>
         <chmod file="${java_lib_dir}/cpickle-canmsgs" perm="a+x"/>
+	-->
     </target>
 
     <target name="run"  depends="jar-monitor">
