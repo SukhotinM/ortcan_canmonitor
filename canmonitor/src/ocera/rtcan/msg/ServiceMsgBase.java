@@ -1,5 +1,7 @@
 package ocera.rtcan.msg;
 
+import org.flib.FString;
+
 /**
  * ocera.rtcan.ServiceMsgBase
  * <p/>
@@ -15,4 +17,9 @@ package ocera.rtcan.msg;
  */
 public class ServiceMsgBase
 {
+    public String toString()
+    {
+        String s = "\n";
+        return s;
+    }
 }

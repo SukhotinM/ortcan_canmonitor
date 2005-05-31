@@ -15,8 +15,9 @@ package ocera.rtcan.msg;
  */
 public class ServiceConfirmMsg extends ServiceMsgBase
 {
-    public static final int ERR_OK = 0;
+    public static final int OK = 0;
+    public static final int ERROR = 1;
 
-    public int errcode = ERR_OK;
+    public int code = OK;
     public String errmsg = "";
 }

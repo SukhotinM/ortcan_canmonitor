@@ -89,6 +89,8 @@ public class CanMonitor extends JFrame implements Runnable
     protected JCheckBox cbxShowRoughMessages;
     private JTextField edRawMessagesId;
     private JTextField edRawMessagsMask;
+    private JTextField edRawMessagesMask;
+    private JPanel lblRawId;
 
     public static void main (String [] args)
     {
@@ -396,8 +398,19 @@ public class CanMonitor extends JFrame implements Runnable
         {
             public void stateChanged(ChangeEvent e)
             {
-                // TODO: send ServiceSetRawMsgParamsRequest
-                ServiceSetRawMsgParamsRequest s2 = new ServiceSetRawMsgParamsRequest();
+                JCheckBox cb = (JCheckBox)e.getSource();
+                ServiceSetRawMsgParamsRequest rq = new ServiceSetRawMsgParamsRequest();
+                if(cb.isSelected()) {
+                    rq.command = ServiceSetRawMsgParamsRequest.ADD;
+                    rq.id = FString.toInt(edRawMessagesId.getText(), 16);
+                    rq.id = FString.toInt(edRawMessagesMask.getText(), 16);
+                    cb.setBackground(Color.ORANGE);
+                }
+                else {
+                    rq.command = ServiceSetRawMsgParamsRequest.REMOVE_ALL;
+                }
+                txtLog.append("SENDING:\t" + rq);
+                canConn.send(rq);
             }
         });
 
@@ -489,9 +502,12 @@ public class CanMonitor extends JFrame implements Runnable
                 msgCount++;
                 if(cbxShowRoughMessages.isSelected()) txtLog.append("RECEIVE[" + msgCount + "]:\t" + o);
             }
-            else if(o instanceof ServiceSetRawMsgParamsRequest) {
-                // TODO: checkout ServiceSetRawMsgParamsRequest
-                ServiceSetRawMsgParamsConfirm s1 = new ServiceSetRawMsgParamsConfirm();
+            else if(o instanceof ServiceSetRawMsgParamsConfirm) {
+                cbxShowRoughMessages.setBackground(lblRawId.getBackground());
+                ServiceSetRawMsgParamsConfirm spc = (ServiceSetRawMsgParamsConfirm)o;
+                if(spc.code != ServiceSetRawMsgParamsConfirm.OK) {
+                    ErrorMsg.show(tabPane, spc.errmsg);
+                }
             }
             else {
                 // scan all CANopen devices
@@ -523,8 +539,8 @@ public class CanMonitor extends JFrame implements Runnable
         final JTabbedPane _1;
         _1 = new JTabbedPane();
         tabPane = _1;
-        _1.setTabPlacement(1);
         _1.setTabLayoutPolicy(0);
+        _1.setTabPlacement(1);
         final JPanel _2;
         _2 = new JPanel();
         _2.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(3, 1, new Insets(3, 3, 0, 0), 3, -1));
@@ -637,43 +653,61 @@ public class CanMonitor extends JFrame implements Runnable
         _5.add(_26, new com.intellij.uiDesigner.core.GridConstraints(0, 1, 1, 1, 0, 1, 6, 1, null, null, null));
         final JPanel _27;
         _27 = new JPanel();
-        _27.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(1, 8, new Insets(0, 0, 0, 0), -1, -1));
+        lblRawId = _27;
+        _27.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(1, 11, new Insets(0, 0, 0, 0), -1, -1));
         _2.add(_27, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, 0, 3, 3, 3, null, null, null));
         final JCheckBox _28;
         _28 = new JCheckBox();
         cbxShowRoughMessages = _28;
+        _28.setEnabled(true);
+        _28.setSelected(false);
+        _28.setContentAreaFilled(true);
+        _28.setBorderPainted(false);
+        _28.setAutoscrolls(false);
         _28.setText("Show rough messages");
         _28.setMnemonic(83);
         _28.setDisplayedMnemonicIndex(0);
+        _28.setBorderPaintedFlat(false);
         _27.add(_28, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, 8, 0, 3, 0, null, null, null));
         final JButton _29;
         _29 = new JButton();
         btClearLog = _29;
-        _29.setText("Clear log");
         _29.setVerticalAlignment(0);
-        _27.add(_29, new com.intellij.uiDesigner.core.GridConstraints(0, 7, 1, 1, 1, 1, 3, 1, null, null, null));
+        _29.setText("Clear log");
+        _27.add(_29, new com.intellij.uiDesigner.core.GridConstraints(0, 10, 1, 1, 1, 1, 3, 1, null, null, null));
         final com.intellij.uiDesigner.core.Spacer _30;
         _30 = new com.intellij.uiDesigner.core.Spacer();
-        _27.add(_30, new com.intellij.uiDesigner.core.GridConstraints(0, 6, 1, 1, 0, 1, 6, 1, null, null, null));
+        _27.add(_30, new com.intellij.uiDesigner.core.GridConstraints(0, 9, 1, 1, 0, 1, 6, 1, null, null, null));
         final JTextField _31;
         _31 = new JTextField();
         edRawMessagesId = _31;
-        _27.add(_31, new com.intellij.uiDesigner.core.GridConstraints(0, 3, 1, 1, 8, 1, 6, 0, null, new Dimension(70, -1), null));
+        _27.add(_31, new com.intellij.uiDesigner.core.GridConstraints(0, 3, 1, 1, 8, 1, 2, 0, null, new Dimension(70, -1), null));
         final JLabel _32;
         _32 = new JLabel();
-        _32.setText("Mask");
-        _27.add(_32, new com.intellij.uiDesigner.core.GridConstraints(0, 4, 1, 1, 8, 0, 0, 0, null, null, null));
-        final JTextField _33;
-        _33 = new JTextField();
-        edRawMessagsMask = _33;
-        _27.add(_33, new com.intellij.uiDesigner.core.GridConstraints(0, 5, 1, 1, 8, 1, 6, 0, null, new Dimension(70, -1), null));
+        _32.setText("ID");
+        _27.add(_32, new com.intellij.uiDesigner.core.GridConstraints(0, 2, 1, 1, 8, 0, 0, 0, null, null, null));
+        final com.intellij.uiDesigner.core.Spacer _33;
+        _33 = new com.intellij.uiDesigner.core.Spacer();
+        _27.add(_33, new com.intellij.uiDesigner.core.GridConstraints(0, 1, 1, 1, 0, 1, 2, 1, new Dimension(30, -1), null, null));
         final JLabel _34;
         _34 = new JLabel();
-        _34.setText("ID");
-        _27.add(_34, new com.intellij.uiDesigner.core.GridConstraints(0, 2, 1, 1, 8, 0, 0, 0, null, null, null));
-        final com.intellij.uiDesigner.core.Spacer _35;
-        _35 = new com.intellij.uiDesigner.core.Spacer();
-        _27.add(_35, new com.intellij.uiDesigner.core.GridConstraints(0, 1, 1, 1, 0, 1, 6, 1, null, null, null));
+        _34.setText("Mask");
+        _27.add(_34, new com.intellij.uiDesigner.core.GridConstraints(0, 6, 1, 1, 8, 0, 0, 0, null, null, null));
+        final JTextField _35;
+        _35 = new JTextField();
+        edRawMessagesMask = _35;
+        _27.add(_35, new com.intellij.uiDesigner.core.GridConstraints(0, 7, 1, 1, 8, 1, 2, 0, null, new Dimension(70, -1), null));
+        final JLabel _36;
+        _36 = new JLabel();
+        _36.setText("hex");
+        _27.add(_36, new com.intellij.uiDesigner.core.GridConstraints(0, 8, 1, 1, 8, 0, 0, 0, null, null, null));
+        final JLabel _37;
+        _37 = new JLabel();
+        _37.setText("hex");
+        _27.add(_37, new com.intellij.uiDesigner.core.GridConstraints(0, 4, 1, 1, 8, 0, 0, 0, null, null, null));
+        final com.intellij.uiDesigner.core.Spacer _38;
+        _38 = new com.intellij.uiDesigner.core.Spacer();
+        _27.add(_38, new com.intellij.uiDesigner.core.GridConstraints(0, 5, 1, 1, 0, 1, 2, 1, new Dimension(30, -1), null, null));
     }
 
 }
