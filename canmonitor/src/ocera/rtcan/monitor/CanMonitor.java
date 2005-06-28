@@ -87,6 +87,8 @@ public class CanMonitor extends JFrame implements Runnable
     private JButton btClearLog;
 
     protected JCheckBox cbxShowRoughMessages;
+    boolean cbxShowRoughMessages_prev_state = false;
+
     private JTextField edRawMessagesId;
     private JTextField edRawMessagsMask;
     private JTextField edRawMessagesMask;
@@ -394,23 +396,32 @@ public class CanMonitor extends JFrame implements Runnable
             }
         });
 
+        //==========================================================
+        //        cbxShowRoughMessages listenner
+        //==========================================================
         cbxShowRoughMessages.addChangeListener(new ChangeListener()
         {
             public void stateChanged(ChangeEvent e)
             {
                 JCheckBox cb = (JCheckBox)e.getSource();
                 ServiceSetRawMsgParamsRequest rq = new ServiceSetRawMsgParamsRequest();
-                if(cb.isSelected()) {
-                    rq.command = ServiceSetRawMsgParamsRequest.ADD;
-                    rq.id = FString.toInt(edRawMessagesId.getText(), 16);
-                    rq.id = FString.toInt(edRawMessagesMask.getText(), 16);
-                    cb.setBackground(Color.ORANGE);
+                boolean state = cb.isSelected();
+                // one click on checkbox generate 5 listenner calls
+                if(state != cbxShowRoughMessages_prev_state) {
+                    cbxShowRoughMessages_prev_state = state;
+                    if(state == true) {
+                        rq.command = ServiceSetRawMsgParamsRequest.ADD;
+                        rq.id = FString.toInt(edRawMessagesId.getText(), 16);
+                        rq.mask = FString.toInt(edRawMessagesMask.getText(), 16);
+                        cb.setBackground(Color.ORANGE);
+                    }
+                    else {
+                        rq.command = ServiceSetRawMsgParamsRequest.REMOVE_ALL;
+                    }
+                    //txtLog.append("event " + cb.isSelected() + "\n");
+                    txtLog.append("SENDING:\t" + rq);
+                    canConn.send(rq);
                 }
-                else {
-                    rq.command = ServiceSetRawMsgParamsRequest.REMOVE_ALL;
-                }
-                txtLog.append("SENDING:\t" + rq);
-                canConn.send(rq);
             }
         });
 
@@ -496,7 +507,7 @@ public class CanMonitor extends JFrame implements Runnable
         while(true) {
             Object o = canConn.readQueue.remove(RoundQueue.NO_BLOCKING);
             if(o == null) break;
-            //FLog.log("CanMonitor", FLog.LOG_DEB, "received CAN message " + s);
+            FLog.log("CanMonitor", FLog.LOG_DEB, "received object " + o);
 
             if(o instanceof CANDtgMsg) {
                 msgCount++;
@@ -578,28 +589,28 @@ public class CanMonitor extends JFrame implements Runnable
         _6.add(_10, new com.intellij.uiDesigner.core.GridConstraints(1, 7, 1, 1, 8, 1, 6, 0, null, null, null));
         final JLabel _11;
         _11 = new JLabel();
-        _11.setText("ID");
         _11.setIconTextGap(0);
+        _11.setText("ID");
         _6.add(_11, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, 8, 0, 0, 0, null, null, null));
         final JLabel _12;
         _12 = new JLabel();
-        _12.setText("byte[0]");
         _12.setIconTextGap(0);
+        _12.setText("byte[0]");
         _6.add(_12, new com.intellij.uiDesigner.core.GridConstraints(0, 1, 1, 1, 8, 0, 0, 0, null, null, null));
         final JLabel _13;
         _13 = new JLabel();
-        _13.setText("byte[4]");
         _13.setIconTextGap(0);
+        _13.setText("byte[4]");
         _6.add(_13, new com.intellij.uiDesigner.core.GridConstraints(0, 5, 1, 1, 8, 0, 0, 0, null, null, null));
         final JLabel _14;
         _14 = new JLabel();
-        _14.setText("byte[6]");
         _14.setIconTextGap(0);
+        _14.setText("byte[6]");
         _6.add(_14, new com.intellij.uiDesigner.core.GridConstraints(0, 7, 1, 1, 8, 0, 0, 0, null, null, null));
         final JLabel _15;
         _15 = new JLabel();
-        _15.setText("byte[2]");
         _15.setIconTextGap(0);
+        _15.setText("byte[2]");
         _6.add(_15, new com.intellij.uiDesigner.core.GridConstraints(0, 3, 1, 1, 8, 0, 0, 0, null, null, null));
         final JTextField _16;
         _16 = new JTextField();
@@ -607,23 +618,23 @@ public class CanMonitor extends JFrame implements Runnable
         _6.add(_16, new com.intellij.uiDesigner.core.GridConstraints(1, 3, 1, 1, 8, 1, 6, 0, null, null, null));
         final JLabel _17;
         _17 = new JLabel();
-        _17.setText("byte[1]");
         _17.setIconTextGap(0);
+        _17.setText("byte[1]");
         _6.add(_17, new com.intellij.uiDesigner.core.GridConstraints(0, 2, 1, 1, 8, 0, 0, 0, null, null, null));
         final JLabel _18;
         _18 = new JLabel();
-        _18.setText("byte[3]");
         _18.setIconTextGap(0);
+        _18.setText("byte[3]");
         _6.add(_18, new com.intellij.uiDesigner.core.GridConstraints(0, 4, 1, 1, 8, 0, 0, 0, null, null, null));
         final JLabel _19;
         _19 = new JLabel();
-        _19.setText("byte[5]");
         _19.setIconTextGap(0);
+        _19.setText("byte[5]");
         _6.add(_19, new com.intellij.uiDesigner.core.GridConstraints(0, 6, 1, 1, 8, 0, 0, 0, null, null, null));
         final JLabel _20;
         _20 = new JLabel();
-        _20.setText("byte[7]");
         _20.setIconTextGap(0);
+        _20.setText("byte[7]");
         _6.add(_20, new com.intellij.uiDesigner.core.GridConstraints(0, 8, 1, 1, 8, 0, 0, 0, null, null, null));
         final JTextField _21;
         _21 = new JTextField();
@@ -659,21 +670,21 @@ public class CanMonitor extends JFrame implements Runnable
         final JCheckBox _28;
         _28 = new JCheckBox();
         cbxShowRoughMessages = _28;
-        _28.setEnabled(true);
-        _28.setSelected(false);
-        _28.setContentAreaFilled(true);
+        _28.setBorderPaintedFlat(false);
         _28.setBorderPainted(false);
-        _28.setAutoscrolls(false);
         _28.setText("Show rough messages");
         _28.setMnemonic(83);
         _28.setDisplayedMnemonicIndex(0);
-        _28.setBorderPaintedFlat(false);
+        _28.setContentAreaFilled(true);
+        _28.setSelected(false);
+        _28.setEnabled(true);
+        _28.setAutoscrolls(false);
         _27.add(_28, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, 8, 0, 3, 0, null, null, null));
         final JButton _29;
         _29 = new JButton();
         btClearLog = _29;
-        _29.setVerticalAlignment(0);
         _29.setText("Clear log");
+        _29.setVerticalAlignment(0);
         _27.add(_29, new com.intellij.uiDesigner.core.GridConstraints(0, 10, 1, 1, 1, 1, 3, 1, null, null, null));
         final com.intellij.uiDesigner.core.Spacer _30;
         _30 = new com.intellij.uiDesigner.core.Spacer();

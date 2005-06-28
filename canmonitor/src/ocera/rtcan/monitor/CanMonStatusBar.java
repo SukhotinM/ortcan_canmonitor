@@ -45,8 +45,8 @@ public class CanMonStatusBar
         lbl1 = _3;
         _3.setVerticalAlignment(1);
         _3.setText("ahoj");
-        _3.setIconTextGap(0);
         _3.setVerticalTextPosition(1);
+        _3.setIconTextGap(0);
         _2.add(_3, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, 8, 0, 0, 0, null, null, null));
         final JPanel _4;
         _4 = new JPanel();
@@ -58,8 +58,8 @@ public class CanMonStatusBar
         lbl2 = _5;
         _5.setVerticalAlignment(1);
         _5.setText("lbl2");
-        _5.setIconTextGap(0);
         _5.setVerticalTextPosition(1);
+        _5.setIconTextGap(0);
         _4.add(_5, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, 8, 0, 0, 0, null, null, null));
         final JPanel _6;
         _6 = new JPanel();
@@ -71,8 +71,8 @@ public class CanMonStatusBar
         lbl3 = _7;
         _7.setVerticalAlignment(1);
         _7.setText("lbl3");
-        _7.setIconTextGap(0);
         _7.setVerticalTextPosition(1);
+        _7.setIconTextGap(0);
         _7.setHorizontalTextPosition(2);
         _6.add(_7, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, 8, 0, 0, 0, null, null, null));
     }

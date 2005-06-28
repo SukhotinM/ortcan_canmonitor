@@ -27,7 +27,10 @@ public class ServiceSetRawMsgParamsRequest extends ServiceMsgBase
 
     public String toString()
     {
-        String s = "Service set CAN raw message parameters - ";
+        String s = "Service set CAN raw message parameters:\n";
+        s += "\tcommand: " + command + "\n";
+        s += "\tid: " + id + "\n";
+        s += "\tmask: " + mask + "\n";
         s += super.toString();
         return s;
     }
