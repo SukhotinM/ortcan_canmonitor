@@ -23,14 +23,14 @@ import java.io.StringWriter;
  * &lt;config>
  *     &lt;macros hidden="yes"/>
  *     &lt;data>
- *         &lt;connection caption="Pøipojení" hidden="yes">
+ *         &lt;connection caption="Connection" hidden="yes">
  *             &lt;database hidden="yes" value="well"/>
  *             &lt;host default="localhost" value="168.192.111.99"/>
  *             &lt;password value="6:>1154=b20/9"/>
  *             &lt;user value="fanda"/>
  *         &lt;/connection>
- *         &lt;browser caption="Internetový prohlížeè">
- *             &lt;name caption="Jméno" default="iexplore.exe" help="Zadejte jméno a pøípadnì i cestu k vašemu programu pro zobrazení HTML stránek." type="file" value="C:\Program Files\Internet Explorer\IEXPLORE.EXE"/>
+ *         &lt;browser caption="Internet browser">
+ *             &lt;name caption="Name" default="iexplore.exe" help="Input executable name for jour default HTML browser." type="file" value="C:\Program Files\Internet Explorer\IEXPLORE.EXE"/>
  *         &lt;/browser>
  *         &lt;filter hidden="yes">
  *             &lt;showStorno value="No"/>

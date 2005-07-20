@@ -1,8 +1,6 @@
 package ocera.util;
 /*
  * ConfigLookup.java
- *
- * Created on 2. øíjen 2003, 18:48
  */
 
 import java.io.*;
