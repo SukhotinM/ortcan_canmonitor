@@ -31,7 +31,7 @@ public class CANDtgMsg
      * Converts a CAN messsage to the string
      */
     public String toString() {
-        String ret = "CAN message {id=" + Integer.toString(id, 16) + ", length=" + length + ", data=[";
+        String ret = "CAN message {id=" + Integer.toString(id, 16) + ", flags=" + flags + ", length=" + length + ", data=[";
         for(int i = 0; i < length; i++) {
             if(i > 0) ret += " ";
             ret += FString.byte2Hex(data[i]);
