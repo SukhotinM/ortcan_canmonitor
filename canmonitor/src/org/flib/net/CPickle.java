@@ -1336,7 +1336,7 @@ public class CPickle
                         s += "        arraylen = " + cfldname + "_arraylen;\n";
                         s += "        if(arraylen > 1024) arraylen = 1024; // limit max packet size\n";
                         s += "        if(len + sizeof(arraylen) > (size_t)buff_len) return -2;\n";
-                        s += "        *(fcpickle_array_size_t*)(buffer + len) = FCPickle::h2n" + pickleOptions.arraySizeHtonTag + "(arraylen);\n";
+                        s += "        *(/*packed*/ fcpickle_array_size_t*)(buffer + len) = FCPickle::h2n" + pickleOptions.arraySizeHtonTag + "(arraylen);\n";
                         s += "        len += sizeof(fcpickle_array_size_t);\n";
                     }
                     else {
@@ -1344,7 +1344,7 @@ public class CPickle
                     }
                     s += "        for(i=0; i<arraylen; i++) {\n";
                     s += "            if(len + sizeof(" + ctype + ") > (size_t)buff_len) return -3;\n";
-                    s += "            *(" + ctype + "*)(buffer + len) = " + fnc + "(" + cfldname + "[i]); len += sizeof(" + ctype + ");\n";
+                    s += "            *(/*packed*/ " + ctype + "*)(buffer + len) = " + fnc + "(" + cfldname + "[i]); len += sizeof(" + ctype + ");\n";
                     s += "        }\n";
                     s += "    }\n";
                 }
@@ -1354,7 +1354,7 @@ public class CPickle
                     s += "        arraylen = " + cfldname + ".size();\n";
                     s += "        if(arraylen > 1024) arraylen = 1024; // limit max packet size\n";
                     s += "        if(len + arraylen + " + CField.getCSize(jtype, pickleOptions) + " > (size_t)buff_len) return -4;\n";
-                    s += "        *(fcpickle_array_size_t*)(buffer + len) = FCPickle::h2n" + pickleOptions.arraySizeHtonTag + "(arraylen);\n";
+                    s += "        *(/*packed*/ fcpickle_array_size_t*)(buffer + len) = FCPickle::h2n" + pickleOptions.arraySizeHtonTag + "(arraylen);\n";
                     s += "        len += sizeof(fcpickle_array_size_t);\n";
                     s += "        for(int i=0; i<arraylen; i++)\n";
                     s += "            buffer[len+i] = (uint8_t)((const " + ccp.c_name + "*)this)->" + cfldname + "[i];\n";
@@ -1364,7 +1364,7 @@ public class CPickle
                 }
                 else {
                     s += "    if(len + sizeof(" + ctype + ") > (size_t)buff_len) return -5;\n";
-                    s += "    *(" + ctype + "*)(buffer + len) = " + fnc + "(" + cfldname + ");\n" +
+                    s += "    *(/*packed*/ " + ctype + "*)(buffer + len) = " + fnc + "(" + cfldname + ");\n" +
                          "    len += sizeof(" + ctype + ");\n";
                 }
             }
@@ -1415,7 +1415,7 @@ public class CPickle
                         s += "        arraylen = o->" + cfldname + "_arraylen;\n";
                         s += "        if(arraylen > 1024) arraylen = 1024; // limit max packet size\n";
                         s += "        if(len + sizeof(arraylen) > (size_t)buff_len) return -2;\n";
-                        s += "        *(fcpickle_array_size_t*)(buffer + len) = h2n" + pickleOptions.arraySizeHtonTag + "(arraylen);";
+                        s += "        *(/*packed*/ fcpickle_array_size_t*)(buffer + len) = h2n" + pickleOptions.arraySizeHtonTag + "(arraylen);";
                         s += " len += sizeof(fcpickle_array_size_t);\n";
                     }
                     else {
@@ -1424,7 +1424,7 @@ public class CPickle
                     s += "        for(i=0; i<arraylen; i++) {\n";
                     s += "            if(!o) return -1;\n";
                     s += "            if(len + sizeof(" + ctype + ") > (size_t)buff_len) return -3;\n";
-                    s += "            *(" + ctype + "*)(buffer + len) = " + fnc + "(o->" + cfldname + "[i]); len += sizeof(" + ctype + ");\n";
+                    s += "            *(/*packed*/ " + ctype + "*)(buffer + len) = " + fnc + "(o->" + cfldname + "[i]); len += sizeof(" + ctype + ");\n";
                     s += "        }\n";
                     s += "    }\n";
                 }
@@ -1434,7 +1434,7 @@ public class CPickle
                     s += "        arraylen = strlen(o->" + cfldname + ");\n";
                     s += "        if(arraylen > 1024) arraylen = 1024; // limit max packet size\n";
                     s += "        if(len + arraylen + " + CField.getCSize(jtype, pickleOptions) + " > (size_t)buff_len) return -4;\n";
-                    s += "        *(fcpickle_array_size_t*)(buffer + len) = h2n" + pickleOptions.arraySizeHtonTag + "(arraylen);";
+                    s += "        *(/*packed*/ fcpickle_array_size_t*)(buffer + len) = h2n" + pickleOptions.arraySizeHtonTag + "(arraylen);";
                     s += " len += sizeof(fcpickle_array_size_t);\n";
                     s += "        memcpy(buffer + len, o->" + cfldname + ", ++arraylen);\n";
                     s += "        len += arraylen;\n";
@@ -1442,7 +1442,7 @@ public class CPickle
                 }
                 else {
                     s += "    if(len + sizeof(" + ctype + ") > (size_t)buff_len) return -5;\n";
-                    s += "    *(" + ctype + "*)(buffer + len) = " + fnc + "(o->" + cfldname + "); len += sizeof(" + ctype + ");\n";
+                    s += "    *(/*packed*/ " + ctype + "*)(buffer + len) = " + fnc + "(o->" + cfldname + "); len += sizeof(" + ctype + ");\n";
                 }
             }
             //s += "    if(len != packetlen) return -6;\n";
@@ -1556,11 +1556,11 @@ public class CPickle
                     int arrcnt = getCArrayDeclaredLen(fld);
                     if(arrcnt == 0) {
                         // variable size array
-                        s += "        arraylen = FCPickle::n2h" + pickleOptions.arraySizeHtonTag + "(*(fcpickle_array_size_t*)(buffer + len));\n";
+                        s += "        arraylen = FCPickle::n2h" + pickleOptions.arraySizeHtonTag + "(*(/*packed*/ fcpickle_array_size_t*)(buffer + len));\n";
                         s += "        len += sizeof(fcpickle_array_size_t);\n";
                         s += "        " + cfldname + "_arraylen = arraylen;\n";
                         s += "        // unpickled varriable size arrays are backuped by packet buffer (library should alocate dynamic memory in other case)\n";
-                        s += "        " + cfldname + " = (" + ctype + "*)(buffer + len); len += arraylen * sizeof(" + ctype + ");\n";
+                        s += "        " + cfldname + " = (/*packed*/ " + ctype + "*)(buffer + len); len += arraylen * sizeof(" + ctype + ");\n";
                     }
                     else {
                         // fixed array
@@ -1569,7 +1569,7 @@ public class CPickle
                         s += "        for(i=0; i<arraylen; i++) {\n";
                         s += "            if(len + sizeof(" + ctype + ") > (size_t)buff_len) return -3;\n";
                         s += "            // unpickled fixed size arrays are not backuped by packet buffer (data are copied)\n";
-                        s += "            " + cfldname + "[i] = " + fnc + "(*(" + ctype + "*)(buffer + len)); len += sizeof(" + ctype + ");\n";
+                        s += "            " + cfldname + "[i] = " + fnc + "(*(/*packed*/ " + ctype + "*)(buffer + len)); len += sizeof(" + ctype + ");\n";
                         s += "        }\n";
                     }
                     s += "    }\n";
@@ -1577,7 +1577,7 @@ public class CPickle
                 else if(jtype.equals(String.class)) {
                     s += "    {\n";
                     s += "        fcpickle_array_size_t string_size;\n";
-                    s += "        string_size = FCPickle::n2h" + pickleOptions.arraySizeHtonTag + "(*(fcpickle_array_size_t*)(buffer + len));\n";
+                    s += "        string_size = FCPickle::n2h" + pickleOptions.arraySizeHtonTag + "(*(/*packed*/ fcpickle_array_size_t*)(buffer + len));\n";
                     s += "        len += sizeof(fcpickle_array_size_t);\n";
                     s += "        if(len + string_size + 1 > (size_t)buff_len) return -2;\n";
                     s += "        " + cfldname + " = (const char*)(buffer+len); // using operator=(const char*)\n";
@@ -1586,7 +1586,7 @@ public class CPickle
                 }
                 else {
                     s += "    if(len + sizeof(" + ctype + ") > (size_t)buff_len) return -4;\n";
-                    s += "    " + cfldname + " = " + fnc + "(*(" + ctype + "*)(buffer + len)); len += sizeof(" + ctype + ");\n";
+                    s += "    " + cfldname + " = " + fnc + "(*(/*packed*/ " + ctype + "*)(buffer + len)); len += sizeof(" + ctype + ");\n";
                 }
             }
             //s += "    if(len != packetlen) return -5;\n";
@@ -1629,11 +1629,11 @@ public class CPickle
                     int arrcnt = getCArrayDeclaredLen(fld);
                     if(arrcnt == 0) {
                         // variable size array
-                        s += "        arraylen = n2h" + pickleOptions.arraySizeHtonTag + "(*(fcpickle_array_size_t*)(buffer + len));\n";
+                        s += "        arraylen = n2h" + pickleOptions.arraySizeHtonTag + "(*(/*packed*/ fcpickle_array_size_t*)(buffer + len));\n";
                         s += "        len += sizeof(fcpickle_array_size_t);\n";
                         s += "        o->" + cfldname + "_arraylen = arraylen;\n";
                         s += "        // unpickled varriable size arrays are backuped by packet buffer (library should alocate dinamic memory in other case)\n";
-                        s += "        o->" + cfldname + " = (" + ctype + "*)(buffer + len); len += arraylen * sizeof(" + ctype + ");\n";
+                        s += "        o->" + cfldname + " = (/*packed*/ " + ctype + "*)(buffer + len); len += arraylen * sizeof(" + ctype + ");\n";
                     }
                     else {
                         s += "        int i;\n";
@@ -1642,7 +1642,7 @@ public class CPickle
                         s += "            if(!o) return -1;\n";
                         s += "            if(len + sizeof(" + ctype + ") > (size_t)buff_len) return -3;\n";
                         s += "            // unpickled fixed size arrays are not backuped by packet buffer (data are copied)\n";
-                        s += "            o->" + cfldname + "[i] = " + fnc + "(*(" + ctype + "*)(buffer + len)); len += sizeof(" + ctype + ");\n";
+                        s += "            o->" + cfldname + "[i] = " + fnc + "(*(/*packed*/ " + ctype + "*)(buffer + len)); len += sizeof(" + ctype + ");\n";
                         s += "        }\n";
                     }
                     s += "    }\n";
@@ -1651,7 +1651,7 @@ public class CPickle
                     s += "    {\n";
                     s += "        fcpickle_array_size_t arraylen;\n";
                     s += "        if(!o) return -1;\n";
-                    s += "        arraylen = n2h" + pickleOptions.arraySizeHtonTag + "(*(fcpickle_array_size_t*)(buffer + len));\n";
+                    s += "        arraylen = n2h" + pickleOptions.arraySizeHtonTag + "(*(/*packed*/ fcpickle_array_size_t*)(buffer + len));\n";
                     s += "        len += sizeof(fcpickle_array_size_t);\n";
                     s += "        if(len + arraylen + 1 > (size_t)buff_len) return -2;\n";
                     s += "        o->" + cfldname + " = buffer+len;\n";
@@ -1660,7 +1660,7 @@ public class CPickle
                 }
                 else {
                     s += "    if(len + sizeof(" + ctype + ") > (size_t)buff_len) return -4;\n";
-                    s += "    o->" + cfldname + " = " + fnc + "(*(" + ctype + "*)(buffer + len)); len += sizeof(" + ctype + ");\n";
+                    s += "    o->" + cfldname + " = " + fnc + "(*(/*packed*/ " + ctype + "*)(buffer + len)); len += sizeof(" + ctype + ");\n";
                 }
             }
             //s += "    if(len != packetlen) return -5;\n";

@@ -525,8 +525,8 @@ public class CANopenDevicePanel extends JPanel
         _1.addTab("OD", _2);
         final JSplitPane _3;
         _3 = new JSplitPane();
-        _3.setDividerSize(8);
         _3.setDividerLocation(164);
+        _3.setDividerSize(8);
         _2.add(_3, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, 0, 3, 3, 3, null, new Dimension(200, 200), null));
         final JPanel _4;
         _4 = new JPanel();
