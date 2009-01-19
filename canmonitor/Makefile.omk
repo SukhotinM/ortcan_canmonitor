@@ -27,7 +27,9 @@ endif
 
 .PHONY: java-default
 
-utils-pass-local: java-default
+binary-pass_HOOKS = java-default
+
+binary-pass-local: java-default
 
 java-default:
 	$(ANT) -Djava_class_dir=$(USER_OBJS_DIR)/ -Djava_lib_dir=$(USER_BIN_DIR)/ \
