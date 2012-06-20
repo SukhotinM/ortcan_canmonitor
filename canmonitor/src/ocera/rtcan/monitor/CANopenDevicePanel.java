@@ -1,5 +1,8 @@
 package ocera.rtcan.monitor;
 
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
 import ocera.rtcan.eds.EdsNode;
 import ocera.rtcan.eds.EdsAttribute;
 import ocera.rtcan.CanOpen.ODNode;
@@ -86,8 +89,7 @@ class AttrModel extends AbstractTableModel
     }
 }
 
-public class CANopenDevicePanel extends JPanel
-{
+public class CANopenDevicePanel extends JPanel {
     private JTextField edSDO;
     private JButton btUploadSDO;
     private JButton btDownloadSDO;
@@ -112,10 +114,10 @@ public class CANopenDevicePanel extends JPanel
     private CanMonitor mainApp;
     private int tabIndex; //< index in CanMonitor tabbed pane
     private JTabbedPane pane;
+    private JComboBox representationComboBox;
 
-    public CANopenDevicePanel(CanMonitor mainapp, int tab_index)
-    {
-        if(mainapp == null) throw new NullPointerException("CANopenDevicePanel(): mainapp is NULL.");
+    public CANopenDevicePanel(CanMonitor mainapp, int tab_index) {
+        if (mainapp == null) throw new NullPointerException("CANopenDevicePanel(): mainapp is NULL.");
         mainApp = mainapp;
         tabIndex = tab_index;
 
@@ -123,32 +125,30 @@ public class CANopenDevicePanel extends JPanel
         initGui();
     }
 
-    int getNodeID()
-    {
+    int getNodeID() {
         String s = edNodeID.getText();
         int node = FString.toInt(s);
         return node;
     }
 
-    public void setNodeID(int new_id)
-    {
+    public void setNodeID(int new_id) {
         edNodeID.setText(Integer.toString(new_id));
         refreshPanel();
     }
 
-    private void refreshPanel()
-    {
-        if(selectedObject == null) edSDO.setText("");
-        else edSDO.setText(ModelViewTransformer.valToStringHexRaw(selectedObject));
+    private void refreshPanel() {
+        if (selectedObject == null) edSDO.setText("");
+        else
+            edSDO.setText(ModelViewTransformer.getViewFromValue(selectedObject, representationComboBox.getSelectedIndex()));
+        // else edSDO.setText(ModelViewTransformer.valToStringHexRaw(selectedObject));
         String s = "node ";
         int node = getNodeID();
-        if(node <= 0) s += "xx";
-        else s+= Integer.toString(node);
+        if (node <= 0) s += "xx";
+        else s += Integer.toString(node);
         mainApp.setTabLabel(tabIndex, s);
     }
 
-    public void init()
-    {
+    public void init() {
 /*
         if(treeEdsRootNode.getUserObject() != null) {
             String s = (String)treeEdsRootNode.getUserObject();
@@ -158,8 +158,7 @@ public class CANopenDevicePanel extends JPanel
 */
     }
 
-    public void initGui()
-    {
+    public void initGui() {
         setLayout(new GridLayout());
         add(pane);
 
@@ -169,7 +168,7 @@ public class CANopenDevicePanel extends JPanel
         treeEds.setModel(treeEdsModel);
 
         tblProp.setModel(attrModel);
-
+        representationComboBox.setModel(new DefaultComboBoxModel(RepresentationEnum.EnumNames));
         //edNodeID.setText(xmlConfig.getValue("/canopen/node", "1"));
         edNodeID.setText("1");
 
@@ -186,21 +185,33 @@ public class CANopenDevicePanel extends JPanel
             public void valueChanged(TreeSelectionEvent e) {
                 TreePath path = e.getPath();
                 selectedObject = null;
-                if(e.isAddedPath()) {
+                if (e.isAddedPath()) {
 //                    System.out.println(path.getLastPathComponent().getClass());
                     EdsTreeNode nd = null;
                     try {
-                        nd = (EdsTreeNode)((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
+                        nd = (EdsTreeNode) ((DefaultMutableTreeNode) path.getLastPathComponent()).getUserObject();
                         System.out.println("Vybrany node " + nd);
-                    } catch (java.lang.ClassCastException ex) {
+                    } catch (ClassCastException ex) {
                         // tree root node selected
 //                        ex.printStackTrace();  //To change body of catch statement use Options | File Templates.
                     }
-                    if(nd instanceof ODNode) selectedObject = (ODNode)nd;
+                    if (nd instanceof ODNode) selectedObject = (ODNode) nd;
                     enableControls();
                     refreshPanel();
                     attrModel.setAttrNode(nd);
                     attrModel.fireTableDataChanged();
+                }
+            }
+        });
+
+        //==========================================================
+        //        representationComboBox listenner
+        //==========================================================
+        representationComboBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if (selectedObject == null) edSDO.setText("");
+                else {
+                    edSDO.setText(ModelViewTransformer.getViewFromValue(selectedObject, representationComboBox.getSelectedIndex()));
                 }
             }
         });
@@ -214,7 +225,7 @@ public class CANopenDevicePanel extends JPanel
                 SDOUploadRequestMsg msg = new SDOUploadRequestMsg();
                 msg.index = selectedObject.index;
                 int six = selectedObject.subIndex;
-                if(six < 0) six = 0;
+                if (six < 0) six = 0;
                 msg.subindex = six;
                 msg.node = Integer.parseInt(edNodeID.getText());
                 txtLog.append("SENDING:\t" + msg + "\n");
@@ -230,13 +241,17 @@ public class CANopenDevicePanel extends JPanel
                 SDODownloadRequestMsg msg = new SDODownloadRequestMsg();
                 msg.index = selectedObject.index;
                 int six = selectedObject.subIndex;
-                if(six < 0) six = 0;
+                if (six < 0) six = 0;
                 msg.subindex = six;
                 msg.node = Integer.parseInt(edNodeID.getText());
-                msg.data = ModelViewTransformer.rawHexString2ValArray2(edSDO.getText());
-                valueProcessedByDownload = msg.data;
-                txtLog.append("SENDING:\t" + msg + "\n");
-                mainApp.sendMessage(msg);
+                try {
+                    msg.data = ModelViewTransformer.string2ValArray2(edSDO.getText(), selectedObject, representationComboBox.getSelectedIndex());
+                    valueProcessedByDownload = msg.data;
+                    txtLog.append("SENDING:\t" + msg + "\n");
+                    mainApp.sendMessage(msg);
+                } catch (NumberFormatException e2) {
+                    ErrorMsg.show("Error " + e2.getMessage());
+                }
             }
         });
 
@@ -252,35 +267,42 @@ public class CANopenDevicePanel extends JPanel
         //==========================================================
         //        edNodeID listenner
         //==========================================================
-        edNodeID.getDocument().addDocumentListener(new DocumentListener()
-        {
-            public void changedUpdate(DocumentEvent e) {update();}
-            public void insertUpdate(DocumentEvent e) {update();}
-            public void removeUpdate(DocumentEvent e) {update();}
-            void update() {refreshPanel();}
+        edNodeID.getDocument().addDocumentListener(new DocumentListener() {
+            public void changedUpdate(DocumentEvent e) {
+                update();
+            }
+
+            public void insertUpdate(DocumentEvent e) {
+                update();
+            }
+
+            public void removeUpdate(DocumentEvent e) {
+                update();
+            }
+
+            void update() {
+                refreshPanel();
+            }
         });
 
         //==========================================================
         //        JTextArea logs listenners
         //==========================================================
         int logsize = FString.toInt(mainApp.xmlConfig.getValue("/logging/logscreensize", "1000000"));
-        ((AbstractDocument)txtLog.getDocument()).setDocumentFilter(new LogTextAreaDocumentFilter(logsize));
+        ((AbstractDocument) txtLog.getDocument()).setDocumentFilter(new LogTextAreaDocumentFilter(logsize));
     }
 
-    private void enableControls()
-    {
-        if(selectedObject == null || selectedObject.subNumber > 0) {
+    private void enableControls() {
+        if (selectedObject == null || selectedObject.subNumber > 0) {
             btUploadSDO.setEnabled(false);
             btDownloadSDO.setEnabled(false);
-        }
-        else {
+        } else {
             btUploadSDO.setEnabled(selectedObject.accessType < ODNode.ACCES_TYPE_WO);
             btDownloadSDO.setEnabled(selectedObject.accessType > ODNode.ACCES_TYPE_RO);
         }
     }
 
-    public void openEDS(String fname)
-    {
+    public void openEDS(String fname) {
         System.out.println("opening " + fname);
         System.out.println("start at " + new Date());
 
@@ -294,13 +316,11 @@ public class CANopenDevicePanel extends JPanel
         try {
             FFile file = new FFile(fname);
             ss = file.toStringArray();
-        }
-        catch(FileNotFoundException e) {
+        } catch (FileNotFoundException e) {
 //            new ErrorMsg(this).show("File not found: " + fname);
             ErrorMsg.show(e.toString());
             return;
-        }
-        catch (IOException e ) {
+        } catch (IOException e) {
             ErrorMsg.show(e.toString());
             return;
         }
@@ -314,34 +334,31 @@ public class CANopenDevicePanel extends JPanel
         int index, subindex;
         // scan file lines
         for (int i = 0; ; i++) {
-            if(i < ss.length) {
+            if (i < ss.length) {
                 s = ss[i].trim();
-                if(s.length() == 0) continue; // skip empty lines
-            }
-            else s = null;
+                if (s.length() == 0) continue; // skip empty lines
+            } else s = null;
 
             // parse line
-            if(i == ss.length || s.charAt(0) == '[') {
+            if (i == ss.length || s.charAt(0) == '[') {
                 // new node definition or end of file
 
                 // resolve mew index & subindex
                 index = subindex = -1;
-                if(i < ss.length) {
+                if (i < ss.length) {
                     s = FString.slice(s, 1, -1);
                     char c = s.charAt(0);
-                    if(c < '0' || c > '9') {
+                    if (c < '0' || c > '9') {
                         //EDS text node
-                    }
-                    else {
+                    } else {
                         // index or subindex
                         String slice[] = StringParser.cutInt("0x" + s);
-                        if(slice[1].trim().length() == 0) {
+                        if (slice[1].trim().length() == 0) {
                             //index
                             index = FString.toInt(slice[0]);
-                        }
-                        else {
-                            if(slice[1].length() > 3) {
-                                if(slice[1].substring(0, 3).equalsIgnoreCase("sub")) {
+                        } else {
+                            if (slice[1].length() > 3) {
+                                if (slice[1].substring(0, 3).equalsIgnoreCase("sub")) {
                                     // subindex
                                     slice[1] = "0x" + slice[1].substring(3);
                                     index = FString.toInt(slice[0]);
@@ -353,19 +370,18 @@ public class CANopenDevicePanel extends JPanel
                 }
 
                 //close curent section
-                if(edsnd != null) {
+                if (edsnd != null) {
                     // close EDS text node
                     edsnd.attributes = (EdsAttribute[]) attlist.toArray(new EdsAttribute[attlist.size()]);
                     //edsList.addNode(edsnd);
                     edsnd = null;
-                }
-                else if(odnd != null) {
-                    if(odsubnd != null) {
+                } else if (odnd != null) {
+                    if (odsubnd != null) {
                         // close subindex definition
                         subndlist.add(odsubnd);
                         odsubnd = null;
                     }
-                    if(odnd.index != index) {
+                    if (odnd.index != index) {
                         // close index definition
                         odnd.subNodes = (ODNode[]) subndlist.toArray(new ODNode[subndlist.size()]);
                         odlst.add(odnd);
@@ -374,28 +390,26 @@ public class CANopenDevicePanel extends JPanel
                     }
                 }
 
-                if(i == ss.length) break;   // end of file
+                if (i == ss.length) break;   // end of file
 
                 // start new section
-                if(s.length() == 0) break;
+                if (s.length() == 0) break;
 
-                if(index < 0) {
+                if (index < 0) {
                     //EDS text node
                     attlist.clear();
                     edsnd = new EdsNode(s);
                     treeEdsRootNode.add(new DefaultMutableTreeNode(edsnd));
-                }
-                else {
+                } else {
                     // index or subindex
-                    if(index != -1 && subindex == -1) {
+                    if (index != -1 && subindex == -1) {
                         //index
                         odnd = new ODNode();
                         //tnd = new DefaultMutableTreeNode(odnd);
                         //treeEdsRootNode.add(tnd);
                         odnd.index = index;
                         odnd.subIndex = 0;
-                    }
-                    else if(index != -1 && subindex != -1) {
+                    } else if (index != -1 && subindex != -1) {
                         //subindex
                         odsubnd = new ODNode();
                         odsubnd.subObject = true;
@@ -407,50 +421,46 @@ public class CANopenDevicePanel extends JPanel
                         odsubnd.subIndex = subindex;
                     }
                 }
-            }
-            else {
+            } else {
                 // parse attribute
                 int ix = s.indexOf('=');
-                if(ix < 0) {
+                if (ix < 0) {
                     s1 = "";
                     s = s.trim();
-                }
-                else {
+                } else {
                     s1 = FString.slice(s, ix + 1).trim();
                     s = FString.slice(s, 0, ix).trim();
                 }
 
-                if(edsnd != null) {
+                if (edsnd != null) {
                     EdsAttribute att = new EdsAttribute(s, s1);
                     attlist.add(att);
-                }
-                else if(odsubnd != null) {
+                } else if (odsubnd != null) {
                     odsubnd.setAttr(s, s1);
-                }
-                else if(odnd != null) {
+                } else if (odnd != null) {
                     odnd.setAttr(s, s1);
                 }
             }
         }
 
-        ODNode[] odir = (ODNode[])odlst.toArray(new ODNode[odlst.size()]);
+        ODNode[] odir = (ODNode[]) odlst.toArray(new ODNode[odlst.size()]);
         Arrays.sort(odir);
         objectDictionary.setOd(odir);
 
         DefaultMutableTreeNode tnd = null;
         // add nodes to the tree
         //int oldix = -1;
-        for(int i = 0; i < odir.length; i++) {
+        for (int i = 0; i < odir.length; i++) {
             ODNode nd = odir[i];
             //if(nd.index == oldix) continue;
 
             //oldix = nd.index;
             tnd = new DefaultMutableTreeNode(nd);
-            if(nd.subNodes != null) {
+            if (nd.subNodes != null) {
 //                nd.type = ODNode.STRUCT_NODE;
                 nd.subIndex = -1;
-                for(int j = 0; j < nd.subNodes.length; j++) {
-    //                FLog.log("CanMonitor", FLog.LOG_ERR, "pocet subnodu: " + nd.subNodes.length);
+                for (int j = 0; j < nd.subNodes.length; j++) {
+                    //                FLog.log("CanMonitor", FLog.LOG_ERR, "pocet subnodu: " + nd.subNodes.length);
                     ODNode snd = nd.subNodes[j];
                     tnd.add(new DefaultMutableTreeNode(snd));
                 }
@@ -464,32 +474,29 @@ public class CANopenDevicePanel extends JPanel
 
     /**
      * try to process incoming message
+     *
      * @return true if the message is procesed
      */
-    public boolean tasteObject(Object o)
-    {
+    public boolean tasteObject(Object o) {
         // read all received messages if any
         FLog.log(getClass().getName(), FLog.LOG_TRASH, "node " + getNodeID() + " - tasteObject() - " + o);
-        if(!(o instanceof SDOConfirmMsg)) return false;
+        if (!(o instanceof SDOConfirmMsg)) return false;
 
         SDOConfirmMsg msg = (SDOConfirmMsg) o;
         // check if it is message for me
-        if(msg.node != getNodeID()) return false;
+        if (msg.node != getNodeID()) return false;
 
         txtLog.append("RECEIVE[" + ++msgCount + "]:\t" + o + "\n");
         // check abort
-        if(msg.type == SDOConfirmMsg.MSG_ABORT) {
+        if (msg.type == SDOConfirmMsg.MSG_ABORT) {
             ErrorMsg.show(this, "ABORT - " + msg.errmsg);
-        }
-        else if(msg.type == SDOConfirmMsg.MSG_ERROR) {
+        } else if (msg.type == SDOConfirmMsg.MSG_ERROR) {
             ErrorMsg.show(this, "ERROR - " + msg.errmsg);
-        }
-        else if (o instanceof SDOUploadConfirmMsg) {
-            SDOUploadConfirmMsg umsg = (SDOUploadConfirmMsg)o;
+        } else if (o instanceof SDOUploadConfirmMsg) {
+            SDOUploadConfirmMsg umsg = (SDOUploadConfirmMsg) o;
             objectDictionary.setValue(umsg.index, umsg.subindex, umsg.data);
-        }
-        else if (o instanceof SDODownloadConfirmMsg) {
-            SDODownloadConfirmMsg download_msg = (SDODownloadConfirmMsg)o;
+        } else if (o instanceof SDODownloadConfirmMsg) {
+            SDODownloadConfirmMsg download_msg = (SDODownloadConfirmMsg) o;
             // succesful download, store new value also to OD
             if (valueProcessedByDownload != null) {
                 objectDictionary.setValue(download_msg.index, download_msg.subindex, valueProcessedByDownload);
@@ -511,109 +518,84 @@ public class CANopenDevicePanel extends JPanel
      * Method generated by IntelliJ IDEA GUI Designer
      * >>> IMPORTANT!! <<<
      * DO NOT edit this method OR call it in your code!
+     *
+     * @noinspection ALL
      */
-    private void $$$setupUI$$$()
-    {
-        final JTabbedPane _1;
-        _1 = new JTabbedPane();
-        pane = _1;
-        _1.setTabPlacement(3);
-        _1.setTabLayoutPolicy(0);
-        final JPanel _2;
-        _2 = new JPanel();
-        _2.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
-        _1.addTab("OD", _2);
-        final JSplitPane _3;
-        _3 = new JSplitPane();
-        _3.setDividerLocation(164);
-        _3.setDividerSize(8);
-        _2.add(_3, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, 0, 3, 3, 3, null, new Dimension(200, 200), null));
-        final JPanel _4;
-        _4 = new JPanel();
-        _4.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
-        _3.setRightComponent(_4);
-        final JPanel _5;
-        _5 = new JPanel();
-        _5.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
-        _4.add(_5, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, 0, 3, 3, 3, null, null, null));
-        final JPanel _6;
-        _6 = new JPanel();
-        _6.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(1, 6, new Insets(2, 3, 0, 3), 5, -1));
-        _5.add(_6, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, 0, 3, 3, 3, null, null, null));
-        final JTextField _7;
-        _7 = new JTextField();
-        edSDO = _7;
-        _6.add(_7, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, 8, 1, 6, 6, null, null, null));
-        final JButton _8;
-        _8 = new JButton();
-        btUploadSDO = _8;
-        _8.setMargin(new Insets(2, 5, 2, 5));
-        _8.setText("Upload");
-        _8.setMnemonic(85);
-        _8.setDisplayedMnemonicIndex(0);
-        _6.add(_8, new com.intellij.uiDesigner.core.GridConstraints(0, 1, 1, 1, 0, 1, 3, 0, null, null, null));
-        final JButton _9;
-        _9 = new JButton();
-        btDownloadSDO = _9;
-        _9.setMargin(new Insets(2, 5, 2, 5));
-        _9.setText("Download");
-        _9.setMnemonic(68);
-        _9.setDisplayedMnemonicIndex(0);
-        _6.add(_9, new com.intellij.uiDesigner.core.GridConstraints(0, 2, 1, 1, 0, 1, 3, 0, null, null, null));
-        final JLabel _10;
-        _10 = new JLabel();
-        _10.setText("node");
-        _6.add(_10, new com.intellij.uiDesigner.core.GridConstraints(0, 4, 1, 1, 8, 0, 0, 0, null, null, null));
-        final JTextField _11;
-        _11 = new JTextField();
-        edNodeID = _11;
-        _6.add(_11, new com.intellij.uiDesigner.core.GridConstraints(0, 5, 1, 1, 8, 1, 0, 0, null, new Dimension(20, -1), null));
-        final com.intellij.uiDesigner.core.Spacer _12;
-        _12 = new com.intellij.uiDesigner.core.Spacer();
-        _6.add(_12, new com.intellij.uiDesigner.core.GridConstraints(0, 3, 1, 1, 0, 1, 0, 1, null, new Dimension(30, -1), null));
-        final JScrollPane _13;
-        _13 = new JScrollPane();
-        _5.add(_13, new com.intellij.uiDesigner.core.GridConstraints(1, 0, 1, 1, 0, 3, 7, 7, null, null, null));
-        final JTable _14;
-        _14 = new JTable();
-        tblProp = _14;
-        _13.setViewportView(_14);
-        final JScrollPane _15;
-        _15 = new JScrollPane();
-        _3.setLeftComponent(_15);
-        final JTree _16;
-        _16 = new JTree();
-        treeEds = _16;
-        _15.setViewportView(_16);
-        final JPanel _17;
-        _17 = new JPanel();
-        _17.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(1, 1, new Insets(3, 5, 3, 5), -1, -1));
-        _1.addTab("Log", _17);
-        final JPanel _18;
-        _18 = new JPanel();
-        _18.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
-        _17.add(_18, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, 0, 3, 3, 3, null, null, null));
-        final JScrollPane _19;
-        _19 = new JScrollPane();
-        _18.add(_19, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, 0, 3, 7, 7, null, null, null));
-        final JTextArea _20;
-        _20 = new JTextArea();
-        txtLog = _20;
-        _19.setViewportView(_20);
-        final JPanel _21;
-        _21 = new JPanel();
-        _21.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
-        _18.add(_21, new com.intellij.uiDesigner.core.GridConstraints(1, 0, 1, 1, 0, 3, 3, 3, null, null, null));
-        final JButton _22;
-        _22 = new JButton();
-        btClearLog = _22;
-        _22.setText("Clear");
-        _22.setMnemonic(67);
-        _22.setDisplayedMnemonicIndex(0);
-        _21.add(_22, new com.intellij.uiDesigner.core.GridConstraints(0, 1, 1, 1, 0, 1, 3, 0, null, null, null));
-        final com.intellij.uiDesigner.core.Spacer _23;
-        _23 = new com.intellij.uiDesigner.core.Spacer();
-        _21.add(_23, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, 0, 1, 6, 1, null, null, null));
+    private void $$$setupUI$$$() {
+        pane = new JTabbedPane();
+        pane.setTabLayoutPolicy(0);
+        pane.setTabPlacement(3);
+        final JPanel panel1 = new JPanel();
+        panel1.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
+        pane.addTab("OD", panel1);
+        final JSplitPane splitPane1 = new JSplitPane();
+        splitPane1.setDividerLocation(164);
+        splitPane1.setDividerSize(8);
+        panel1.add(splitPane1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, new Dimension(200, 200), null, 0, false));
+        final JPanel panel2 = new JPanel();
+        panel2.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
+        splitPane1.setRightComponent(panel2);
+        final JPanel panel3 = new JPanel();
+        panel3.setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
+        panel2.add(panel3, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+        final JPanel panel4 = new JPanel();
+        panel4.setLayout(new GridLayoutManager(1, 6, new Insets(2, 3, 0, 3), 5, -1));
+        panel3.add(panel4, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+        edSDO = new JTextField();
+        panel4.add(edSDO, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        btUploadSDO = new JButton();
+        btUploadSDO.setMargin(new Insets(2, 5, 2, 5));
+        btUploadSDO.setText("Upload");
+        btUploadSDO.setMnemonic('U');
+        btUploadSDO.setDisplayedMnemonicIndex(0);
+        panel4.add(btUploadSDO, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        btDownloadSDO = new JButton();
+        btDownloadSDO.setMargin(new Insets(2, 5, 2, 5));
+        btDownloadSDO.setText("Download");
+        btDownloadSDO.setMnemonic('D');
+        btDownloadSDO.setDisplayedMnemonicIndex(0);
+        panel4.add(btDownloadSDO, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JLabel label1 = new JLabel();
+        label1.setText("node");
+        panel4.add(label1, new GridConstraints(0, 4, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        edNodeID = new JTextField();
+        panel4.add(edNodeID, new GridConstraints(0, 5, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(20, -1), null, 0, false));
+        representationComboBox = new JComboBox();
+        panel4.add(representationComboBox, new GridConstraints(0, 3, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JScrollPane scrollPane1 = new JScrollPane();
+        panel3.add(scrollPane1, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        tblProp = new JTable();
+        scrollPane1.setViewportView(tblProp);
+        final JScrollPane scrollPane2 = new JScrollPane();
+        splitPane1.setLeftComponent(scrollPane2);
+        treeEds = new JTree();
+        scrollPane2.setViewportView(treeEds);
+        final JPanel panel5 = new JPanel();
+        panel5.setLayout(new GridLayoutManager(1, 1, new Insets(3, 5, 3, 5), -1, -1));
+        pane.addTab("Log", panel5);
+        final JPanel panel6 = new JPanel();
+        panel6.setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
+        panel5.add(panel6, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+        final JScrollPane scrollPane3 = new JScrollPane();
+        panel6.add(scrollPane3, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        txtLog = new JTextArea();
+        scrollPane3.setViewportView(txtLog);
+        final JPanel panel7 = new JPanel();
+        panel7.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
+        panel6.add(panel7, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+        btClearLog = new JButton();
+        btClearLog.setText("Clear");
+        btClearLog.setMnemonic('C');
+        btClearLog.setDisplayedMnemonicIndex(0);
+        panel7.add(btClearLog, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final Spacer spacer1 = new Spacer();
+        panel7.add(spacer1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
     }
 
+    /**
+     * @noinspection ALL
+     */
+    public JComponent $$$getRootComponent$$$() {
+        return pane;
+    }
 }

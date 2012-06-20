@@ -14,6 +14,30 @@ public class ModelViewTransformer {
 //---------Transformation byte array of values ->View------------------------
 
     /**
+     * Returns string representation of  ODNode value.
+     *
+     * @param node  selected ODNode..
+     * @param selectedIndex selected type of representation.
+     * @return  Number in String represented by  choice.
+     */
+    public static String getViewFromValue(ODNode node, int selectedIndex){
+        String retString;
+        switch (selectedIndex) {
+
+            case RepresentationEnum.HEX_RAW:
+                retString = valToStringHexRaw(node);
+                break;
+            case RepresentationEnum.BIN_RAW:
+                retString = valToStringBinRaw(node);
+                break;
+            default:
+                retString= valToStringHexRaw(node);
+                break;
+        }
+        return retString;
+    }
+
+    /**
      * Returns a string representation of the first argument in hex format.
      *
      * @param node ODNode will be converted to a string.
@@ -49,6 +73,30 @@ public class ModelViewTransformer {
     }
 
 //---------Transformation View-> Model byte array  ------------------------
+    /**
+     * Returns a byte array containing the value of first argument. Format for string is selected by choice..
+     *
+     * @param s  string will be converted.
+     * @param node  selected ODNode.
+     * @param selectedIndex choice of representation.
+     * @return   a byte array containing the value of first argument.
+     */
+    public static byte[] string2ValArray2(String s,ODNode node,int selectedIndex) throws NumberFormatException {
+        byte[] ret;
+        switch (selectedIndex) {
+            case RepresentationEnum.HEX_RAW:
+                ret = rawHexString2ValArray2(s);
+                break;
+            case RepresentationEnum.BIN_RAW:
+                ret = rawBinString2ValArray2(s);
+                break;
+            default:
+                ret = rawHexString2ValArray2(s);
+                break;
+        }
+        return ret;
+    }
+
 
     /**
      *

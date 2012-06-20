@@ -7,6 +7,9 @@
  */
 package ocera.rtcan.monitor;
 
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
 import ocera.util.xmlconfig.XmlConfig;
 import ocera.util.*;
 import ocera.msg.*;
@@ -53,8 +56,7 @@ class LogTextAreaDocumentFilter extends DocumentFilter
     }
 }
 
-public class CanMonitor extends JFrame implements Runnable
-{
+public class CanMonitor extends JFrame implements Runnable {
     protected JTextField edCanID;
     protected JTextField edCanData0;
     protected JTextField edCanData1;
@@ -98,8 +100,7 @@ public class CanMonitor extends JFrame implements Runnable
     private JCheckBox cbxCanFlagOVR;
     private JCheckBox cbxCanFlagLOCAL;
 
-    public static void main (String [] args)
-    {
+    public static void main(String[] args) {
         FLog.logTreshold = FLog.LOG_ERR;
         //FLog.logTreshold = FLog.LOG_DEB;
         CanMonitor app = new CanMonitor(args);
@@ -109,71 +110,63 @@ public class CanMonitor extends JFrame implements Runnable
 //        app.pack();
     }
 
-    private void openConfigDialog()
-    {
+    private void openConfigDialog() {
         ConfigDialog xconf = new ConfigDialog(xmlConfig);
         xconf.show();
         configChanged = true;
     }
 
-    private void processCmdLine(String[] args)
-    {
-        if(args == null) return;
+    private void processCmdLine(String[] args) {
+        if (args == null) return;
         String edsFile = null;
-        for(int i = 0; i < args.length; i++) {
+        for (int i = 0; i < args.length; i++) {
             String s = args[i];
-            if(FString.charAt(s, 0) == '-') {
+            if (FString.charAt(s, 0) == '-') {
                 char c = FString.charAt(s, 1);
-                if(c == 'a') {
+                if (c == 'a') {
                     // address
                     i++;
-                    if(i < args.length) {
+                    if (i < args.length) {
                         xmlConfig.setValue("/connection/host", args[i]);
                         //canProxyIP = args[i];
                     }
-                }
-                else if(c == 'n') {
+                } else if (c == 'n') {
                     // node
                     i++;
-                    if(i < args.length) {
+                    if (i < args.length) {
                         xmlConfig.setValue("/canopen/node", args[i]);
                         //xmlConfig.getRootElement().cd("/canopen/node").setValue(args[i]);
                         //nodeNo = FString.toInt(args[i]);
                     }
-                }
-                else if(c == 'e') {
+                } else if (c == 'e') {
                     // EDS file name
                     i++;
-                    if(i < args.length) edsFile = args[i];
-                }
-                else if(c == 'v') {
+                    if (i < args.length) edsFile = args[i];
+                } else if (c == 'v') {
                     // verbose
                     FLog.logTreshold = FLog.LOG_INF;
-                }
-                else if(c == 'g') {
+                } else if (c == 'g') {
                     // debug level
                     i++;
-                    if(i < args.length) FLog.logTreshold = Integer.parseInt(args[i]);
+                    if (i < args.length) FLog.logTreshold = Integer.parseInt(args[i]);
                     System.err.println("logTreshold: " + FLog.logTreshold);
-                }
-                else if(c == 'h') {
+                } else if (c == 'h') {
                     // help
                     System.out.println("USAGE: cammonitor -a host -n node -e EDS_file_name -v -g debug_level\n");
                     System.exit(0);
                 }
             }
         }
-        if(edsFile != null) {
+        if (edsFile != null) {
             openEDS(edsFile);
         }
     }
 
-    protected void connect()
-    {
+    protected void connect() {
         String ip = xmlConfig.getRootElement().cd("/connection/host").getValue("localhost").trim();
         String port = xmlConfig.getValue("/connection/port", "1001").trim();
         int p = FString.toInt(port);
-        if(ip.length() > 0) {
+        if (ip.length() > 0) {
             txtLog.append("\nconnecting to " + ip + " ...\n");
             canConn.connect(ip, p);
             txtLog.append(canConn.getErrMsg() + "\n");
@@ -181,19 +174,17 @@ public class CanMonitor extends JFrame implements Runnable
         refreshForm();
     }
 
-    protected void disConnect()
-    {
+    protected void disConnect() {
         canConn.disconnect();
         refreshForm();
     }
 
-    public CanMonitor(String[] cmd_line_args)
-    {
+    public CanMonitor(String[] cmd_line_args) {
         super("CANopen monitor - Beta 0.9");
         boolean asserts_enabled = false;
         assert asserts_enabled = true;
-        
-    
+
+
         edCanData[0] = edCanData0;
         edCanData[1] = edCanData1;
         edCanData[2] = edCanData2;
@@ -217,19 +208,17 @@ public class CanMonitor extends JFrame implements Runnable
     /**
      * Opens configuration file, triing next locations:<br>
      */
-    protected void loadConfig()
-    {
+    protected void loadConfig() {
         String conf_file = confLookup.findConfigFile();
         System.out.println("loading config from '" + conf_file + "'");
-        if(conf_file != null) xmlConfig.fromURI(conf_file);
+        if (conf_file != null) xmlConfig.fromURI(conf_file);
         else FLog.log("CanMonitor", FLog.LOG_ERR, "Configuration file " + CONFIG_FILE_NAME + " not found.");
     }
 
-    protected void saveConfig()
-    {
-        if(!configChanged) return;
+    protected void saveConfig() {
+        if (!configChanged) return;
         String conf_file = confLookup.createConfigFile();
-        if(conf_file == null) {
+        if (conf_file == null) {
             FLog.log("CanMonitor", FLog.LOG_ERR, "Configuration file " + CONFIG_FILE_NAME + " cann't be written.");
             return;
         }
@@ -245,17 +234,15 @@ public class CanMonitor extends JFrame implements Runnable
         }
     }
 
-    public void initActions()
-    {
+    public void initActions() {
         //final CanMonitor app = this;
 
         XMLActionMapBuilder ab = new XMLActionMapBuilder(this);
         actions = ab.buildFrom("resources/menu.xml");
 
         XMLAction act;
-        act = (XMLAction)actions.get("EdsOpen");
-        if(act != null) act.actionListener = new ActionListener()
-        {
+        act = (XMLAction) actions.get("EdsOpen");
+        if (act != null) act.actionListener = new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 JFileChooser fc = new JFileChooser();
                 FFileFilter filter = new FFileFilter();
@@ -267,53 +254,48 @@ public class CanMonitor extends JFrame implements Runnable
                 fc.setCurrentDirectory(new File(pwd));
 
                 int ret = fc.showOpenDialog(CanMonitor.this);
-                if(ret == JFileChooser.APPROVE_OPTION) {
+                if (ret == JFileChooser.APPROVE_OPTION) {
                     String fname = fc.getSelectedFile().getAbsolutePath();
                     openEDS(fname);
                 }
             }
         };
 
-        act = (XMLAction)actions.get("EdsClose");
-        if(act != null) act.actionListener = new ActionListener()
-        {
+        act = (XMLAction) actions.get("EdsClose");
+        if (act != null) act.actionListener = new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 int ix = tabPane.getSelectedIndex();
-                if(ix > 0) {
-                    CANopenDevicePanel candev = (CANopenDevicePanel)tabPane.getComponentAt(ix);
+                if (ix > 0) {
+                    CANopenDevicePanel candev = (CANopenDevicePanel) tabPane.getComponentAt(ix);
                     tabPane.remove(candev);
                     //candeviceList.remove(candev);
                 }
             }
         };
 
-        act = (XMLAction)actions.get("Connect");
-        if(act != null) act.actionListener = new ActionListener()
-        {
+        act = (XMLAction) actions.get("Connect");
+        if (act != null) act.actionListener = new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 connect();
             }
         };
 
-        act = (XMLAction)actions.get("Disconnect");
-        if(act != null) act.actionListener = new ActionListener()
-        {
+        act = (XMLAction) actions.get("Disconnect");
+        if (act != null) act.actionListener = new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 disConnect();
             }
         };
 
-        act = (XMLAction)actions.get("Config");
-        if(act != null) act.actionListener = new ActionListener()
-        {
+        act = (XMLAction) actions.get("Config");
+        if (act != null) act.actionListener = new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 openConfigDialog();
             }
         };
 
-        act = (XMLAction)actions.get("DevicesReset");
-        if(act != null) act.actionListener = new ActionListener()
-        {
+        act = (XMLAction) actions.get("DevicesReset");
+        if (act != null) act.actionListener = new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 edCanID.setText("0");
                 edCanData[0].setText("1");
@@ -322,9 +304,8 @@ public class CanMonitor extends JFrame implements Runnable
             }
         };
 
-        act = (XMLAction)actions.get("Quit");
-        if(act != null) act.actionListener = new ActionListener()
-        {
+        act = (XMLAction) actions.get("Quit");
+        if (act != null) act.actionListener = new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 cleanUp();
                 System.gc();
@@ -333,15 +314,14 @@ public class CanMonitor extends JFrame implements Runnable
         };
     }
 
-    private void openEDS(String fname)
-    {
+    private void openEDS(String fname) {
         int ix = tabPane.getTabCount();
         // find free node number
         int node = 0;
-        for(int i=1; i<ix; i++) {
-            CANopenDevicePanel p =  (CANopenDevicePanel)tabPane.getComponentAt(i);
+        for (int i = 1; i < ix; i++) {
+            CANopenDevicePanel p = (CANopenDevicePanel) tabPane.getComponentAt(i);
             int nd = p.getNodeID();
-            if(nd > node) node = nd;
+            if (nd > node) node = nd;
         }
         CANopenDevicePanel candev = new CANopenDevicePanel(CanMonitor.this, ix);
         tabPane.add(candev);
@@ -350,8 +330,7 @@ public class CanMonitor extends JFrame implements Runnable
         candev.setNodeID(++node);
     }
 
-    public void initGui()
-    {
+    public void initGui() {
         pane = getContentPane();
 
         //==========================================================
@@ -383,15 +362,15 @@ public class CanMonitor extends JFrame implements Runnable
             public void actionPerformed(ActionEvent e) {
                 CANDtgMsg msg = new CANDtgMsg();
                 msg.id = FString.toInt(edCanID.getText());
-                for(msg.length=0; msg.length<CANDtgMsg.DATA_LEN_MAX; ) {
+                for (msg.length = 0; msg.length < CANDtgMsg.DATA_LEN_MAX; ) {
                     String s = edCanData[msg.length].getText().trim();
-                    if(s.length() == 0) break;
+                    if (s.length() == 0) break;
                     msg.data[msg.length++] = (byte) FString.toInt(s, 10);
                 }
-                if(cbxCanFlagRTR.isSelected()) msg.flags |= CANDtgMsg.MSG_RTR;
-                if(cbxCanFlagEXT.isSelected()) msg.flags |= CANDtgMsg.MSG_EXT;
-                if(cbxCanFlagOVR.isSelected()) msg.flags |= CANDtgMsg.MSG_OVR;
-                if(cbxCanFlagLOCAL.isSelected()) msg.flags |= CANDtgMsg.MSG_LOCAL;
+                if (cbxCanFlagRTR.isSelected()) msg.flags |= CANDtgMsg.MSG_RTR;
+                if (cbxCanFlagEXT.isSelected()) msg.flags |= CANDtgMsg.MSG_EXT;
+                if (cbxCanFlagOVR.isSelected()) msg.flags |= CANDtgMsg.MSG_OVR;
+                if (cbxCanFlagLOCAL.isSelected()) msg.flags |= CANDtgMsg.MSG_LOCAL;
                 txtLog.append("SENDING:\t" + msg);
                 canConn.send(msg);
             }
@@ -406,23 +385,20 @@ public class CanMonitor extends JFrame implements Runnable
         //==========================================================
         //        cbxShowRoughMessages listenner
         //==========================================================
-        cbxShowRoughMessages.addChangeListener(new ChangeListener()
-        {
-            public void stateChanged(ChangeEvent e)
-            {
-                JCheckBox cb = (JCheckBox)e.getSource();
+        cbxShowRoughMessages.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                JCheckBox cb = (JCheckBox) e.getSource();
                 ServiceSetRawMsgParamsRequest rq = new ServiceSetRawMsgParamsRequest();
                 boolean state = cb.isSelected();
                 // one click on checkbox generate 5 listenner calls
-                if(state != cbxShowRoughMessages_prev_state) {
+                if (state != cbxShowRoughMessages_prev_state) {
                     cbxShowRoughMessages_prev_state = state;
-                    if(state == true) {
+                    if (state == true) {
                         rq.command = ServiceSetRawMsgParamsRequest.ADD;
                         rq.id = FString.toInt(edRawMessagesId.getText(), 16);
                         rq.mask = FString.toInt(edRawMessagesMask.getText(), 16);
                         cb.setBackground(Color.ORANGE);
-                    }
-                    else {
+                    } else {
                         rq.command = ServiceSetRawMsgParamsRequest.REMOVE_ALL;
                     }
                     //txtLog.append("event " + cb.isSelected() + "\n");
@@ -436,7 +412,7 @@ public class CanMonitor extends JFrame implements Runnable
         //        JTextArea logs listenners
         //==========================================================
         int logsize = FString.toInt(xmlConfig.getValue("/logging/logscreensize", "1000000"));
-        ((AbstractDocument)txtLog.getDocument()).setDocumentFilter(new LogTextAreaDocumentFilter(logsize));
+        ((AbstractDocument) txtLog.getDocument()).setDocumentFilter(new LogTextAreaDocumentFilter(logsize));
 
         //==========================================================
         //        JFrame listenners
@@ -448,35 +424,30 @@ public class CanMonitor extends JFrame implements Runnable
         });
     }
 
-    private void refreshForm()
-    {
-        boolean connected  = (canConn.getSocket() != null);
+    private void refreshForm() {
+        boolean connected = (canConn.getSocket() != null);
         XMLAction act;
-        act = (XMLAction)actions.get("Connect");
+        act = (XMLAction) actions.get("Connect");
         act.setEnabled(!connected);
-        act = (XMLAction)actions.get("Disconnect");
+        act = (XMLAction) actions.get("Disconnect");
         act.setEnabled(connected);
-        if(!connected) {
+        if (!connected) {
             statusBar.lbl1.setText("disconnected");
-        }
-        else {
+        } else {
             statusBar.lbl1.setText(canConn.getSocket().toString());
         }
         statusBar.lbl2.setText("");
         statusBar.lbl3.setText("");
     }
 
-    public void setTabLabel(int tabix, String lbl)
-    {
+    public void setTabLabel(int tabix, String lbl) {
         tabPane.setTitleAt(tabix, lbl);
     }
 
-    private void enableControls()
-    {
+    private void enableControls() {
     }
 
-    public void init()
-    {
+    public void init() {
         canConn.setGuiUpdate(this);
 //        canConn.connect(serverAddr, 0);
 
@@ -484,8 +455,7 @@ public class CanMonitor extends JFrame implements Runnable
         t.start();
     }
 
-    public void cleanUp()
-    {
+    public void cleanUp() {
 //        if(canReaderThread != null)
 //            try {canReaderThread.join();} catch(InterruptedException e) {}
         disConnect();
@@ -495,10 +465,9 @@ public class CanMonitor extends JFrame implements Runnable
     /**
      * sends msg to the socket if it is opened
      */
-    void sendMessage(Object o)
-    {
-        if(canConn == null) return;
-        if(!canConn.connected()) return;
+    void sendMessage(Object o) {
+        if (canConn == null) return;
+        if (!canConn.connected()) return;
         canConn.send(o);
     }
 
@@ -508,30 +477,27 @@ public class CanMonitor extends JFrame implements Runnable
      * code refreshing GUI controls from variables set by other thread
      * mainly CanMonClient thread
      */
-    public void run()
-    {
+    public void run() {
         // read all received messages if any
-        while(true) {
+        while (true) {
             Object o = canConn.readQueue.remove(RoundQueue.NO_BLOCKING);
-            if(o == null) break;
+            if (o == null) break;
             FLog.log("CanMonitor", FLog.LOG_DEB, "received object " + o);
 
-            if(o instanceof CANDtgMsg) {
+            if (o instanceof CANDtgMsg) {
                 msgCount++;
-                if(cbxShowRoughMessages.isSelected()) txtLog.append("RECEIVE[" + msgCount + "]:\t" + o);
-            }
-            else if(o instanceof ServiceSetRawMsgParamsConfirm) {
+                if (cbxShowRoughMessages.isSelected()) txtLog.append("RECEIVE[" + msgCount + "]:\t" + o);
+            } else if (o instanceof ServiceSetRawMsgParamsConfirm) {
                 cbxShowRoughMessages.setBackground(lblRawId.getBackground());
-                ServiceSetRawMsgParamsConfirm spc = (ServiceSetRawMsgParamsConfirm)o;
-                if(spc.code != ServiceSetRawMsgParamsConfirm.OK) {
+                ServiceSetRawMsgParamsConfirm spc = (ServiceSetRawMsgParamsConfirm) o;
+                if (spc.code != ServiceSetRawMsgParamsConfirm.OK) {
                     ErrorMsg.show(tabPane, spc.errmsg);
                 }
-            }
-            else {
+            } else {
                 // scan all CANopen devices
-                for(int i=1; i<tabPane.getTabCount(); i++) {
-                    CANopenDevicePanel p =  (CANopenDevicePanel)tabPane.getComponentAt(i);
-                    if(p.tasteObject(o)) break;
+                for (int i = 1; i < tabPane.getTabCount(); i++) {
+                    CANopenDevicePanel p = (CANopenDevicePanel) tabPane.getComponentAt(i);
+                    if (p.tasteObject(o)) break;
                 }
             }
         }
@@ -551,201 +517,145 @@ public class CanMonitor extends JFrame implements Runnable
      * Method generated by IntelliJ IDEA GUI Designer
      * >>> IMPORTANT!! <<<
      * DO NOT edit this method OR call it in your code!
+     *
+     * @noinspection ALL
      */
-    private void $$$setupUI$$$()
-    {
-        final JTabbedPane _1;
-        _1 = new JTabbedPane();
-        tabPane = _1;
-        _1.setTabLayoutPolicy(0);
-        _1.setTabPlacement(1);
-        final JPanel _2;
-        _2 = new JPanel();
-        _2.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(3, 1, new Insets(3, 3, 0, 0), 3, -1));
-        _1.addTab("CAN", _2);
-        final JScrollPane _3;
-        _3 = new JScrollPane();
-        _2.add(_3, new com.intellij.uiDesigner.core.GridConstraints(1, 0, 1, 1, 0, 3, 7, 7, null, null, null));
-        final JTextArea _4;
-        _4 = new JTextArea();
-        txtLog = _4;
-        _3.setViewportView(_4);
-        final JPanel _5;
-        _5 = new JPanel();
-        _5.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(1, 3, new Insets(0, 0, 0, 0), -1, -1));
-        _2.add(_5, new com.intellij.uiDesigner.core.GridConstraints(2, 0, 1, 1, 0, 3, 3, 3, null, null, null));
-        final JPanel _6;
-        _6 = new JPanel();
-        _6.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(2, 11, new Insets(0, 0, 0, 0), 5, 0));
-        _5.add(_6, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, 0, 3, 0, 0, null, null, null));
-        final JTextField _7;
-        _7 = new JTextField();
-        edCanID = _7;
-        _6.add(_7, new com.intellij.uiDesigner.core.GridConstraints(1, 0, 1, 1, 8, 1, 6, 6, new Dimension(50, -1), null, null));
-        final JTextField _8;
-        _8 = new JTextField();
-        edCanData0 = _8;
-        _6.add(_8, new com.intellij.uiDesigner.core.GridConstraints(1, 1, 1, 1, 0, 1, 6, 0, null, null, null));
-        final JTextField _9;
-        _9 = new JTextField();
-        edCanData4 = _9;
-        _6.add(_9, new com.intellij.uiDesigner.core.GridConstraints(1, 5, 1, 1, 8, 1, 6, 0, null, null, null));
-        final JTextField _10;
-        _10 = new JTextField();
-        edCanData6 = _10;
-        _6.add(_10, new com.intellij.uiDesigner.core.GridConstraints(1, 7, 1, 1, 8, 1, 6, 0, null, null, null));
-        final JLabel _11;
-        _11 = new JLabel();
-        _11.setText("ID");
-        _11.setIconTextGap(0);
-        _6.add(_11, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, 8, 0, 0, 0, null, null, null));
-        final JLabel _12;
-        _12 = new JLabel();
-        _12.setText("byte[0]");
-        _12.setIconTextGap(0);
-        _6.add(_12, new com.intellij.uiDesigner.core.GridConstraints(0, 1, 1, 1, 8, 0, 0, 0, null, null, null));
-        final JLabel _13;
-        _13 = new JLabel();
-        _13.setText("byte[4]");
-        _13.setIconTextGap(0);
-        _6.add(_13, new com.intellij.uiDesigner.core.GridConstraints(0, 5, 1, 1, 8, 0, 0, 0, null, null, null));
-        final JLabel _14;
-        _14 = new JLabel();
-        _14.setText("byte[6]");
-        _14.setIconTextGap(0);
-        _6.add(_14, new com.intellij.uiDesigner.core.GridConstraints(0, 7, 1, 1, 8, 0, 0, 0, null, null, null));
-        final JLabel _15;
-        _15 = new JLabel();
-        _15.setText("byte[2]");
-        _15.setIconTextGap(0);
-        _6.add(_15, new com.intellij.uiDesigner.core.GridConstraints(0, 3, 1, 1, 8, 0, 0, 0, null, null, null));
-        final JTextField _16;
-        _16 = new JTextField();
-        edCanData2 = _16;
-        _6.add(_16, new com.intellij.uiDesigner.core.GridConstraints(1, 3, 1, 1, 8, 1, 6, 0, null, null, null));
-        final JLabel _17;
-        _17 = new JLabel();
-        _17.setText("byte[1]");
-        _17.setIconTextGap(0);
-        _6.add(_17, new com.intellij.uiDesigner.core.GridConstraints(0, 2, 1, 1, 8, 0, 0, 0, null, null, null));
-        final JLabel _18;
-        _18 = new JLabel();
-        _18.setText("byte[3]");
-        _18.setIconTextGap(0);
-        _6.add(_18, new com.intellij.uiDesigner.core.GridConstraints(0, 4, 1, 1, 8, 0, 0, 0, null, null, null));
-        final JLabel _19;
-        _19 = new JLabel();
-        _19.setText("byte[5]");
-        _19.setIconTextGap(0);
-        _6.add(_19, new com.intellij.uiDesigner.core.GridConstraints(0, 6, 1, 1, 8, 0, 0, 0, null, null, null));
-        final JLabel _20;
-        _20 = new JLabel();
-        _20.setText("byte[7]");
-        _20.setIconTextGap(0);
-        _6.add(_20, new com.intellij.uiDesigner.core.GridConstraints(0, 8, 1, 1, 8, 0, 0, 0, null, null, null));
-        final JTextField _21;
-        _21 = new JTextField();
-        edCanData1 = _21;
-        _6.add(_21, new com.intellij.uiDesigner.core.GridConstraints(1, 2, 1, 1, 8, 1, 6, 0, null, null, null));
-        final JTextField _22;
-        _22 = new JTextField();
-        edCanData3 = _22;
-        _6.add(_22, new com.intellij.uiDesigner.core.GridConstraints(1, 4, 1, 1, 8, 1, 6, 0, null, null, null));
-        final JTextField _23;
-        _23 = new JTextField();
-        edCanData5 = _23;
-        _6.add(_23, new com.intellij.uiDesigner.core.GridConstraints(1, 6, 1, 1, 8, 1, 6, 0, null, null, null));
-        final JTextField _24;
-        _24 = new JTextField();
-        edCanData7 = _24;
-        _6.add(_24, new com.intellij.uiDesigner.core.GridConstraints(1, 8, 1, 1, 8, 1, 6, 0, null, null, null));
-        final JCheckBox _25;
-        _25 = new JCheckBox();
-        cbxCanFlagRTR = _25;
-        _25.setText("RTR");
-        _6.add(_25, new com.intellij.uiDesigner.core.GridConstraints(0, 9, 1, 1, 8, 0, 3, 0, null, null, null));
-        final JCheckBox _26;
-        _26 = new JCheckBox();
-        cbxCanFlagEXT = _26;
-        _26.setText("EXT");
-        _6.add(_26, new com.intellij.uiDesigner.core.GridConstraints(1, 9, 1, 1, 8, 0, 3, 0, null, null, null));
-        final JCheckBox _27;
-        _27 = new JCheckBox();
-        cbxCanFlagOVR = _27;
-        _27.setText("OVR");
-        _6.add(_27, new com.intellij.uiDesigner.core.GridConstraints(0, 10, 1, 1, 8, 0, 3, 0, null, null, null));
-        final JCheckBox _28;
-        _28 = new JCheckBox();
-        cbxCanFlagLOCAL = _28;
-        _28.setText("LOCAL");
-        _6.add(_28, new com.intellij.uiDesigner.core.GridConstraints(1, 10, 1, 1, 8, 0, 3, 0, null, null, null));
-        final JButton _29;
-        _29 = new JButton();
-        btSend = _29;
-        _29.setText("Send");
-        _29.setMnemonic(83);
-        _29.setDisplayedMnemonicIndex(0);
-        _5.add(_29, new com.intellij.uiDesigner.core.GridConstraints(0, 1, 1, 1, 0, 1, 3, 0, null, null, null));
-        final com.intellij.uiDesigner.core.Spacer _30;
-        _30 = new com.intellij.uiDesigner.core.Spacer();
-        _5.add(_30, new com.intellij.uiDesigner.core.GridConstraints(0, 2, 1, 1, 0, 1, 6, 1, null, null, null));
-        final JPanel _31;
-        _31 = new JPanel();
-        lblRawId = _31;
-        _31.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(1, 11, new Insets(0, 0, 0, 0), -1, -1));
-        _2.add(_31, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, 0, 3, 3, 3, null, null, null));
-        final JCheckBox _32;
-        _32 = new JCheckBox();
-        cbxShowRoughMessages = _32;
-        _32.setText("Show rough messages");
-        _32.setMnemonic(83);
-        _32.setDisplayedMnemonicIndex(0);
-        _32.setSelected(false);
-        _32.setAutoscrolls(false);
-        _32.setEnabled(true);
-        _32.setContentAreaFilled(true);
-        _32.setBorderPaintedFlat(false);
-        _32.setBorderPainted(false);
-        _31.add(_32, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, 8, 0, 3, 0, null, null, null));
-        final JButton _33;
-        _33 = new JButton();
-        btClearLog = _33;
-        _33.setText("Clear log");
-        _33.setVerticalAlignment(0);
-        _31.add(_33, new com.intellij.uiDesigner.core.GridConstraints(0, 10, 1, 1, 1, 1, 3, 1, null, null, null));
-        final com.intellij.uiDesigner.core.Spacer _34;
-        _34 = new com.intellij.uiDesigner.core.Spacer();
-        _31.add(_34, new com.intellij.uiDesigner.core.GridConstraints(0, 9, 1, 1, 0, 1, 6, 1, null, null, null));
-        final JTextField _35;
-        _35 = new JTextField();
-        edRawMessagesId = _35;
-        _31.add(_35, new com.intellij.uiDesigner.core.GridConstraints(0, 3, 1, 1, 8, 1, 2, 0, null, new Dimension(70, -1), null));
-        final JLabel _36;
-        _36 = new JLabel();
-        _36.setText("ID");
-        _31.add(_36, new com.intellij.uiDesigner.core.GridConstraints(0, 2, 1, 1, 8, 0, 0, 0, null, null, null));
-        final com.intellij.uiDesigner.core.Spacer _37;
-        _37 = new com.intellij.uiDesigner.core.Spacer();
-        _31.add(_37, new com.intellij.uiDesigner.core.GridConstraints(0, 1, 1, 1, 0, 1, 2, 1, new Dimension(30, -1), null, null));
-        final JLabel _38;
-        _38 = new JLabel();
-        _38.setText("Mask");
-        _31.add(_38, new com.intellij.uiDesigner.core.GridConstraints(0, 6, 1, 1, 8, 0, 0, 0, null, null, null));
-        final JTextField _39;
-        _39 = new JTextField();
-        edRawMessagesMask = _39;
-        _31.add(_39, new com.intellij.uiDesigner.core.GridConstraints(0, 7, 1, 1, 8, 1, 2, 0, null, new Dimension(70, -1), null));
-        final JLabel _40;
-        _40 = new JLabel();
-        _40.setText("hex");
-        _31.add(_40, new com.intellij.uiDesigner.core.GridConstraints(0, 8, 1, 1, 8, 0, 0, 0, null, null, null));
-        final JLabel _41;
-        _41 = new JLabel();
-        _41.setText("hex");
-        _31.add(_41, new com.intellij.uiDesigner.core.GridConstraints(0, 4, 1, 1, 8, 0, 0, 0, null, null, null));
-        final com.intellij.uiDesigner.core.Spacer _42;
-        _42 = new com.intellij.uiDesigner.core.Spacer();
-        _31.add(_42, new com.intellij.uiDesigner.core.GridConstraints(0, 5, 1, 1, 0, 1, 2, 1, new Dimension(30, -1), null, null));
+    private void $$$setupUI$$$() {
+        tabPane = new JTabbedPane();
+        tabPane.setTabLayoutPolicy(0);
+        tabPane.setTabPlacement(1);
+        final JPanel panel1 = new JPanel();
+        panel1.setLayout(new GridLayoutManager(3, 1, new Insets(3, 3, 0, 0), 3, -1));
+        tabPane.addTab("CAN", panel1);
+        final JScrollPane scrollPane1 = new JScrollPane();
+        panel1.add(scrollPane1, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        txtLog = new JTextArea();
+        scrollPane1.setViewportView(txtLog);
+        final JPanel panel2 = new JPanel();
+        panel2.setLayout(new GridLayoutManager(1, 3, new Insets(0, 0, 0, 0), -1, -1));
+        panel1.add(panel2, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+        final JPanel panel3 = new JPanel();
+        panel3.setLayout(new GridLayoutManager(2, 11, new Insets(0, 0, 0, 0), 5, 0));
+        panel2.add(panel3, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        edCanID = new JTextField();
+        panel3.add(edCanID, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_WANT_GROW, new Dimension(50, -1), null, null, 0, false));
+        edCanData0 = new JTextField();
+        panel3.add(edCanData0, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        edCanData4 = new JTextField();
+        panel3.add(edCanData4, new GridConstraints(1, 5, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        edCanData6 = new JTextField();
+        panel3.add(edCanData6, new GridConstraints(1, 7, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JLabel label1 = new JLabel();
+        label1.setIconTextGap(0);
+        label1.setText("ID");
+        panel3.add(label1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JLabel label2 = new JLabel();
+        label2.setIconTextGap(0);
+        label2.setText("byte[0]");
+        panel3.add(label2, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JLabel label3 = new JLabel();
+        label3.setIconTextGap(0);
+        label3.setText("byte[4]");
+        panel3.add(label3, new GridConstraints(0, 5, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JLabel label4 = new JLabel();
+        label4.setIconTextGap(0);
+        label4.setText("byte[6]");
+        panel3.add(label4, new GridConstraints(0, 7, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JLabel label5 = new JLabel();
+        label5.setIconTextGap(0);
+        label5.setText("byte[2]");
+        panel3.add(label5, new GridConstraints(0, 3, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        edCanData2 = new JTextField();
+        panel3.add(edCanData2, new GridConstraints(1, 3, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JLabel label6 = new JLabel();
+        label6.setIconTextGap(0);
+        label6.setText("byte[1]");
+        panel3.add(label6, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JLabel label7 = new JLabel();
+        label7.setIconTextGap(0);
+        label7.setText("byte[3]");
+        panel3.add(label7, new GridConstraints(0, 4, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JLabel label8 = new JLabel();
+        label8.setIconTextGap(0);
+        label8.setText("byte[5]");
+        panel3.add(label8, new GridConstraints(0, 6, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JLabel label9 = new JLabel();
+        label9.setIconTextGap(0);
+        label9.setText("byte[7]");
+        panel3.add(label9, new GridConstraints(0, 8, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        edCanData1 = new JTextField();
+        panel3.add(edCanData1, new GridConstraints(1, 2, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        edCanData3 = new JTextField();
+        panel3.add(edCanData3, new GridConstraints(1, 4, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        edCanData5 = new JTextField();
+        panel3.add(edCanData5, new GridConstraints(1, 6, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        edCanData7 = new JTextField();
+        panel3.add(edCanData7, new GridConstraints(1, 8, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        cbxCanFlagRTR = new JCheckBox();
+        cbxCanFlagRTR.setText("RTR");
+        panel3.add(cbxCanFlagRTR, new GridConstraints(0, 9, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        cbxCanFlagEXT = new JCheckBox();
+        cbxCanFlagEXT.setText("EXT");
+        panel3.add(cbxCanFlagEXT, new GridConstraints(1, 9, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        cbxCanFlagOVR = new JCheckBox();
+        cbxCanFlagOVR.setText("OVR");
+        panel3.add(cbxCanFlagOVR, new GridConstraints(0, 10, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        cbxCanFlagLOCAL = new JCheckBox();
+        cbxCanFlagLOCAL.setText("LOCAL");
+        panel3.add(cbxCanFlagLOCAL, new GridConstraints(1, 10, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        btSend = new JButton();
+        btSend.setText("Send");
+        btSend.setMnemonic('S');
+        btSend.setDisplayedMnemonicIndex(0);
+        panel2.add(btSend, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final Spacer spacer1 = new Spacer();
+        panel2.add(spacer1, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+        lblRawId = new JPanel();
+        lblRawId.setLayout(new GridLayoutManager(1, 11, new Insets(0, 0, 0, 0), -1, -1));
+        panel1.add(lblRawId, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+        cbxShowRoughMessages = new JCheckBox();
+        cbxShowRoughMessages.setAutoscrolls(false);
+        cbxShowRoughMessages.setBorderPainted(false);
+        cbxShowRoughMessages.setBorderPaintedFlat(false);
+        cbxShowRoughMessages.setContentAreaFilled(true);
+        cbxShowRoughMessages.setEnabled(true);
+        cbxShowRoughMessages.setSelected(false);
+        cbxShowRoughMessages.setText("Show rough messages");
+        cbxShowRoughMessages.setMnemonic('S');
+        cbxShowRoughMessages.setDisplayedMnemonicIndex(0);
+        lblRawId.add(cbxShowRoughMessages, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        btClearLog = new JButton();
+        btClearLog.setText("Clear log");
+        btClearLog.setVerticalAlignment(0);
+        lblRawId.add(btClearLog, new GridConstraints(0, 10, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, 1, null, null, null, 0, false));
+        final Spacer spacer2 = new Spacer();
+        lblRawId.add(spacer2, new GridConstraints(0, 9, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+        edRawMessagesId = new JTextField();
+        lblRawId.add(edRawMessagesId, new GridConstraints(0, 3, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(70, -1), null, 0, false));
+        final JLabel label10 = new JLabel();
+        label10.setText("ID");
+        lblRawId.add(label10, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final Spacer spacer3 = new Spacer();
+        lblRawId.add(spacer3, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_GROW, 1, new Dimension(30, -1), null, null, 0, false));
+        final JLabel label11 = new JLabel();
+        label11.setText("Mask");
+        lblRawId.add(label11, new GridConstraints(0, 6, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        edRawMessagesMask = new JTextField();
+        lblRawId.add(edRawMessagesMask, new GridConstraints(0, 7, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(70, -1), null, 0, false));
+        final JLabel label12 = new JLabel();
+        label12.setText("hex");
+        lblRawId.add(label12, new GridConstraints(0, 8, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JLabel label13 = new JLabel();
+        label13.setText("hex");
+        lblRawId.add(label13, new GridConstraints(0, 4, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final Spacer spacer4 = new Spacer();
+        lblRawId.add(spacer4, new GridConstraints(0, 5, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_GROW, 1, new Dimension(30, -1), null, null, 0, false));
     }
 
+    /**
+     * @noinspection ALL
+     */
+    public JComponent $$$getRootComponent$$$() {
+        return tabPane;
+    }
 }
