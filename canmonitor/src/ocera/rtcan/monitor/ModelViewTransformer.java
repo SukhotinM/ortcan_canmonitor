@@ -87,6 +87,19 @@ public class ModelViewTransformer {
         return retString;
     }
 
+    /**
+     * Returns decimal String representation of the  byte array, for signed integer number.
+     *
+     * @param values byte array is in little-endian  byte-order .
+     * @return  Signed decimal number  expressed in string .
+     */
+    public static String integerToString(byte[] values)
+    {
+        String retString;
+        BigInteger bi= new BigInteger(changeEndian(values));
+        retString = bi.toString(10);
+        return retString;
+    }
 
 //---------Transformation View-> Model byte array  ------------------------
     /**
@@ -94,7 +107,8 @@ public class ModelViewTransformer {
      *
      * @param s  string will be converted.
      * @param node  selected ODNode.
-     * @param selectedIndex choice of representation.
+     * @param selectedIndex ch
+     *                      oice of representation.
      * @return   a byte array containing the value of first argument.
      */
     public static byte[] string2ValArray2(String s,ODNode node,int selectedIndex) throws NumberFormatException {
@@ -144,6 +158,22 @@ public class ModelViewTransformer {
     }
 
     /**
+     * Returns a byte array containing the value of first argument. This method is for signed integer..
+     *
+     * @param s  string will be converted.
+     * @param node ODNode instance for determining length of type
+     * @return   a byte array containing the value of first argument.
+     */
+    public static byte[] integerString2ValArray(String s, ODNode node) throws NumberFormatException
+    {
+        byte[] retArray;
+
+        retArray=longToByteArrayLittleEndian(Long.parseLong(s),ODNode.getDataTypeLength(node.dataType));
+        return retArray;
+
+    }
+
+    /**
      *
      * convert 'bbbbbbbb bbbbbbbb bbbbbbbb ' to short[], bbbbbbbb are binary numbers
      */
@@ -182,6 +212,25 @@ public class ModelViewTransformer {
         }
         return ret;
     }
+
+
+    /**
+     * Returns byte array extracted from first argument.
+     *
+     * @param data
+     * @param length to extract.
+     * @return  a byte array extracted from first argument.
+     */
+    public static byte[] longToByteArrayLittleEndian(long data, int length) {
+
+        byte[] retValue = new byte[length];
+        for (int i = 0; i < length; i++) {
+            retValue[i] = (byte) ((data >> (i * 8)) & 0xff);
+        }
+
+        return retValue;
+    }
+
 
     /**
      * Returns byte array  in reverse endian order.

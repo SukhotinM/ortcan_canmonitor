@@ -140,6 +140,13 @@ public class ODNode implements EdsTreeNode, Comparable
         return 0;
     }
 
+    //  For determine length of DataType
+    public static int getDataTypeLength(int dataType)
+    {
+        return dataTypeDefs[dataType].len;
+
+    }
+
     public String getAttrName(int ix)
     {
         if(fields == null) return "<NULL>";
