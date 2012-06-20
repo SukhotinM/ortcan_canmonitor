@@ -3,6 +3,7 @@ package ocera.rtcan.monitor;
 import ocera.util.StringParser;
 import org.flib.FString;
 import java.util.ArrayList;
+import ocera.rtcan.CanOpen.ODNode;
 /**
  * User: kubaspet
  */
@@ -10,6 +11,24 @@ import java.util.ArrayList;
 public class ModelViewTransformer {
 
 
+//---------Transformation byte array of values ->View------------------------
+
+    /**
+     * Returns a string representation of the first argument in hex format.
+     *
+     * @param node ODNode will be converted to a string.
+     * @return  a string representation of the first argument in hex format.
+     */
+    public static String valToStringHexRaw(ODNode node)
+    {
+        byte[] val = node.getValue();
+        String s = "";
+        for(int i = 0; i < val.length; i++) {
+            if(i > 0) s += " ";
+            s += FString.byte2Hex(val[i]);
+        }
+        return s;
+    }
 
 //---------Transformation View-> Model byte array  ------------------------
 
