@@ -139,7 +139,7 @@ public class CANopenDevicePanel extends JPanel
     private void refreshPanel()
     {
         if(selectedObject == null) edSDO.setText("");
-        else edSDO.setText(selectedObject.valToString());
+        else edSDO.setText(ModelViewTransformer.valToStringHexRaw(selectedObject));
         String s = "node ";
         int node = getNodeID();
         if(node <= 0) s += "xx";
