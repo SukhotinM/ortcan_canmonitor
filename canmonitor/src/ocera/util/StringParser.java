@@ -178,6 +178,37 @@ public class StringParser {
         String[] ret = {"", s};
         return ret;
     }
+
+    /**
+     * parsing
+     *
+     * @param s string to be cutted
+     * @return array of strings. This array contains tokens from input string.
+     */
+    public static String[] parseBin(String s) {
+        String tmp;
+        String pattern = "[01]*";
+        StringTokenizer tok = new StringTokenizer(s); // obtains tokens by whitespace
+        String[] retString = new String[tok.countTokens()];
+        int i = 0;
+
+        while (tok.hasMoreTokens()) {
+            tmp = tok.nextToken();
+            if (tmp.matches(pattern) && tmp.length() < 9) {
+
+                retString[i] = tmp;
+                i++;
+                //    System.out.println(Integer.parseInt(tmp, 2));
+            }   else
+            {
+                throw new NumberFormatException(" in format "+"\""+tmp+"\"");
+            }
+        }
+        // To uz ted nema vubec cenu, kdyz vyhazuju tu vyjimku
+        // System.arraycopy(retString,0,retString,0,i);
+        // retString = Arrays.copyOf(retString, i); // fast copy to trim null
+        return retString;
+    }
 }
 //--------------------------------------------------------------
 
