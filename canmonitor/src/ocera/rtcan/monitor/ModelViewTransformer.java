@@ -4,6 +4,7 @@ import ocera.util.StringParser;
 import org.flib.FString;
 import java.util.ArrayList;
 import ocera.rtcan.CanOpen.ODNode;
+import java.math.BigInteger;
 /**
  * User: kubaspet
  */
@@ -72,6 +73,21 @@ public class ModelViewTransformer {
         return sb.toString();
     }
 
+    /**
+     * Returns decimal string representation of  byte array, for unsigned integer number.
+     *
+     * @param values byte array is in little-endian byte-order.
+     * @return  Unsigned decimal number  expressed in String.
+     */
+    public static String unsignedToString(byte[] values)
+    {
+        String retString;
+        BigInteger bi= new BigInteger(1,changeEndian(values));
+        retString = bi.toString(10);
+        return retString;
+    }
+
+
 //---------Transformation View-> Model byte array  ------------------------
     /**
      * Returns a byte array containing the value of first argument. Format for string is selected by choice..
@@ -97,6 +113,35 @@ public class ModelViewTransformer {
         return ret;
     }
 
+
+    /**
+     * Returns a byte array containing the value of first argument. This method is for unsigned integer.
+     *
+     * @param s  string will be converted.
+     * @param bytes  expected length.
+     * @return   a byte array containing the value of first argument.
+     */
+    public static byte[] unsignedString2ValArray(String s, int bytes) {
+        byte[] retArr = new byte[bytes];
+        byte[] tmp = null;
+        BigInteger bi = new BigInteger(s, 10);
+        if(bi.signum()==-1) throw new NumberFormatException(", type is unsigned.");
+
+        tmp=bi.toByteArray();
+        if(tmp.length>bytes)
+        {
+            if(tmp.length>(bytes+1)) throw new NumberFormatException(", number is too big.");   // the number is longer than type
+            if(tmp.length==(bytes+1)&&tmp[0]!=0) throw new NumberFormatException(", number is too big."); //sign is in tmp[0] or length
+        }
+
+        for(int i = 0 ;i<tmp.length;i++)
+        {
+            if(tmp[tmp.length-1-i]==0) continue;
+            retArr[i] = tmp[tmp.length-1-i];
+        }
+
+        return retArr;
+    }
 
     /**
      *
@@ -136,6 +181,22 @@ public class ModelViewTransformer {
             ret[i] = tmp.byteValue();
         }
         return ret;
+    }
+
+    /**
+     * Returns byte array  in reverse endian order.
+     *
+     * @param array to reorder.
+     * @return  a byte array in reverse endian order..
+     */
+    public static byte[] changeEndian(byte[] array)
+    {
+        byte[] retarr = new byte[array.length];
+
+        for (int i = 0; i < array.length; i++) {
+            retarr[array.length - i - 1] = array[i];
+        }
+        return retarr;
     }
 
 }
