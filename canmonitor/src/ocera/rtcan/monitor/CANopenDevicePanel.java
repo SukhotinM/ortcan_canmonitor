@@ -233,7 +233,7 @@ public class CANopenDevicePanel extends JPanel
                 if(six < 0) six = 0;
                 msg.subindex = six;
                 msg.node = Integer.parseInt(edNodeID.getText());
-                msg.data = ODNode.string2ValArray2(edSDO.getText());
+                msg.data = ModelViewTransformer.rawHexString2ValArray2(edSDO.getText());
                 valueProcessedByDownload = msg.data;
                 txtLog.append("SENDING:\t" + msg + "\n");
                 mainApp.sendMessage(msg);
