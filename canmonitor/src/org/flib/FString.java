@@ -165,6 +165,22 @@ public class FString
         //return Integer.toString( ( val & 0xff ) + 0x100, 16 /* radix */ ) .substring( 1 );
     }
 
+    public static String byte2Bin(byte val) {
+        StringBuilder sb = new StringBuilder();
+        byte mask = -128; // mask for MSB
+        for (int i = 0; i < 8; i++) {
+            if ((val & mask) == 0) {
+                sb.append("0");
+
+            } else {
+                sb.append("1");
+            }
+            val= (byte) (val<<1);
+        }
+        //    System.out.println("" + sb.toString());
+        return sb.toString();
+    }
+
     public static String bytes2String(byte[] bytes)
     {
         String s = "";
