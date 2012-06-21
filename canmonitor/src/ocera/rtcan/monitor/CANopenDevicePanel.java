@@ -138,8 +138,14 @@ public class CANopenDevicePanel extends JPanel {
 
     private void refreshPanel() {
         if (selectedObject == null) edSDO.setText("");
-        else
+        else try {
             edSDO.setText(ModelViewTransformer.getViewFromValue(selectedObject, representationComboBox.getSelectedIndex()));
+        } catch (InvalidTypeOfViewException e) {
+            //  representationComboBox.setSelectedIndex(0);
+            representationComboBox.setSelectedIndex(RepresentationEnum.HEX_RAW); // If is selected undefined type of view. Set HEX_RAW default
+            ErrorMsg.show("Error: " + e.getMessage());  //To change body of catch statement use File | Settings | File Templates.
+        }
+        //  edSDO.setText(ModelViewTransformer.getViewFromValue(selectedObject, representationComboBox.getSelectedIndex()));
         // else edSDO.setText(ModelViewTransformer.valToStringHexRaw(selectedObject));
         String s = "node ";
         int node = getNodeID();
@@ -211,7 +217,12 @@ public class CANopenDevicePanel extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 if (selectedObject == null) edSDO.setText("");
                 else {
-                    edSDO.setText(ModelViewTransformer.getViewFromValue(selectedObject, representationComboBox.getSelectedIndex()));
+                    try {
+                        edSDO.setText(ModelViewTransformer.getViewFromValue(selectedObject, representationComboBox.getSelectedIndex()));
+                    } catch (InvalidTypeOfViewException e1) {
+                        representationComboBox.setSelectedIndex(RepresentationEnum.HEX_RAW);
+                        ErrorMsg.show("Error: " + e1.getMessage()); //To change body of catch statement use File | Settings | File Templates.
+                    }
                 }
             }
         });
@@ -251,6 +262,8 @@ public class CANopenDevicePanel extends JPanel {
                     mainApp.sendMessage(msg);
                 } catch (NumberFormatException e2) {
                     ErrorMsg.show("Error " + e2.getMessage());
+                } catch (InvalidTypeOfViewException e3) {
+                    ErrorMsg.show("Error: " + e3.getMessage());
                 }
             }
         });

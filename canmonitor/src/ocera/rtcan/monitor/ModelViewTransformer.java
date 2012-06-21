@@ -9,7 +9,60 @@ import java.math.BigInteger;
  * User: kubaspet
  */
 
+ final class ViewByTypeOptions {
+    private ViewByTypeOptions(){}
+
+ //   public static final String [] OptionsNames={"UNSIGNED", "INT","REAL","HEX","UNDEFINED"};
+    public static final int UNSIGNED = 0;
+    public static final int INT = 1;
+    public static final int REAL = 2;
+    public static final int HEX = 3;
+    public static final int UNDEFINED = 4;
+
+}
+
 public class ModelViewTransformer {
+    /**
+     * Mapping for model <-> view transformation by type.
+     */
+    public final static int viewByTypeDefinition[] = {
+            ViewByTypeOptions.HEX,     // UNKNOWN
+            ViewByTypeOptions.UNDEFINED,     //BOOLEAN
+            ViewByTypeOptions.INT,     //INTEGER8
+            ViewByTypeOptions.INT,     //INTEGER16
+            ViewByTypeOptions.INT,     //INTEGER32
+            ViewByTypeOptions.UNSIGNED, //UNSIGNED8
+            ViewByTypeOptions.UNSIGNED, //UNSIGNED16
+            ViewByTypeOptions.UNSIGNED, //UNSIGNED32
+            ViewByTypeOptions.UNDEFINED,    //  REAL32
+            ViewByTypeOptions.UNDEFINED,    //VISIBLE_STRING
+            ViewByTypeOptions.UNDEFINED,    //OCTET_STRING
+            ViewByTypeOptions.UNDEFINED,    // UNICODE_STRING
+            ViewByTypeOptions.UNDEFINED,    //TIME_OF_DAY
+            ViewByTypeOptions.UNDEFINED,    //TIME_DIFERENCE
+            ViewByTypeOptions.UNDEFINED,    //RESERVED
+            ViewByTypeOptions.UNDEFINED,    //DOMAIN
+            ViewByTypeOptions.INT,    //INTEGER24
+            ViewByTypeOptions.UNDEFINED,   //REAL64
+            ViewByTypeOptions.INT,   //INTEGER40
+            ViewByTypeOptions.INT,   //INTEGER48
+            ViewByTypeOptions.INT,   //INTEGER56
+            ViewByTypeOptions.INT,   //INTEGER64
+            ViewByTypeOptions.UNSIGNED,  // UNSIGNED24
+            ViewByTypeOptions.HEX,     // reserved
+            ViewByTypeOptions.UNSIGNED, // UNSIGNED40
+            ViewByTypeOptions.UNSIGNED, // UNSIGNED48
+            ViewByTypeOptions.UNSIGNED, // UNSIGNED56
+            ViewByTypeOptions.UNSIGNED, // UNSIGNED64
+            ViewByTypeOptions.HEX, //reserved
+            ViewByTypeOptions.HEX, //reserved
+            ViewByTypeOptions.HEX, //reserved
+            ViewByTypeOptions.HEX, //reserved
+            ViewByTypeOptions.HEX, // PDO_COMMUNICATION_PARAMETER
+            ViewByTypeOptions.HEX, // PDO_MAPPING
+            ViewByTypeOptions.HEX, //  SDO_PARAMETER
+            ViewByTypeOptions.HEX //  IDENTITY
+    };
 
 
 //---------Transformation byte array of values ->View------------------------
@@ -21,7 +74,7 @@ public class ModelViewTransformer {
      * @param selectedIndex selected type of representation.
      * @return  Number in String represented by  choice.
      */
-    public static String getViewFromValue(ODNode node, int selectedIndex){
+    public static String getViewFromValue(ODNode node, int selectedIndex) throws InvalidTypeOfViewException {
         String retString;
         switch (selectedIndex) {
 
@@ -31,10 +84,39 @@ public class ModelViewTransformer {
             case RepresentationEnum.BIN_RAW:
                 retString = valToStringBinRaw(node);
                 break;
+            case RepresentationEnum.TYPE_PREF:
+                retString= valToStringByType(node);
+                break;
             default:
                 retString= valToStringHexRaw(node);
                 break;
         }
+        return retString;
+    }
+
+    /**
+     * Returns String representation of  ODNode value .
+     *
+     * @param node  selected ODNode
+     * @return  Number in String represented by  type .
+     */
+    private static String valToStringByType(ODNode node) throws InvalidTypeOfViewException {
+        String retString=null;
+        switch (viewByTypeDefinition[node.dataType]) {
+
+            case  ViewByTypeOptions.UNSIGNED:
+                retString = unsignedToString(node.getValue());
+                break;
+            case ViewByTypeOptions.INT:
+                retString = integerToString(node.getValue());
+                break;
+            case ViewByTypeOptions.HEX:
+                retString = valToStringHexRaw(node);
+                break;
+            case ViewByTypeOptions.UNDEFINED:
+                throw new InvalidTypeOfViewException("Not defined view for type. Try Hex_raw.");
+        }
+
         return retString;
     }
 
@@ -107,11 +189,10 @@ public class ModelViewTransformer {
      *
      * @param s  string will be converted.
      * @param node  selected ODNode.
-     * @param selectedIndex ch
-     *                      oice of representation.
+     * @param selectedIndex choice of representation.
      * @return   a byte array containing the value of first argument.
      */
-    public static byte[] string2ValArray2(String s,ODNode node,int selectedIndex) throws NumberFormatException {
+    public static byte[] string2ValArray2(String s,ODNode node,int selectedIndex) throws NumberFormatException, InvalidTypeOfViewException {
         byte[] ret;
         switch (selectedIndex) {
             case RepresentationEnum.HEX_RAW:
@@ -120,6 +201,9 @@ public class ModelViewTransformer {
             case RepresentationEnum.BIN_RAW:
                 ret = rawBinString2ValArray2(s);
                 break;
+            case RepresentationEnum.TYPE_PREF:
+                ret = stringToValByType(s,node);
+                break;
             default:
                 ret = rawHexString2ValArray2(s);
                 break;
@@ -127,6 +211,36 @@ public class ModelViewTransformer {
         return ret;
     }
 
+
+    /**
+     * Returns a byte array containing the value of first argument. Format for string is selected by type of ODNode.
+     *
+     * @param s  string will be converted.
+     * @param node  selected ODNode.
+     * @return   a byte array containing the value of first argument.
+     */
+    public static byte[] stringToValByType(String s,ODNode node)  throws NumberFormatException, InvalidTypeOfViewException
+    {   byte [] retArray=null;
+        switch (viewByTypeDefinition[node.dataType]) {
+
+            case ViewByTypeOptions.UNSIGNED:
+                retArray = unsignedString2ValArray(s,ODNode.getDataTypeLength(node.dataType));
+                break;
+
+            case ViewByTypeOptions.INT:
+                retArray= integerString2ValArray(s,node);
+                break;
+
+            case ViewByTypeOptions.HEX:
+                retArray = rawHexString2ValArray2(s);
+                break;
+
+            case ViewByTypeOptions.UNDEFINED:
+                throw new InvalidTypeOfViewException("Not defined view for type. Try Hex_raw.");
+        }
+
+        return retArray;
+    }
 
     /**
      * Returns a byte array containing the value of first argument. This method is for unsigned integer.
