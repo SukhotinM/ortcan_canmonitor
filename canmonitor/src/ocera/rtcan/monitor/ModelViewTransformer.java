@@ -34,7 +34,7 @@ public class ModelViewTransformer {
             ViewByTypeOptions.UNSIGNED, //UNSIGNED8
             ViewByTypeOptions.UNSIGNED, //UNSIGNED16
             ViewByTypeOptions.UNSIGNED, //UNSIGNED32
-            ViewByTypeOptions.UNDEFINED,    //  REAL32
+            ViewByTypeOptions.REAL,    //  REAL32
             ViewByTypeOptions.UNDEFINED,    //VISIBLE_STRING
             ViewByTypeOptions.UNDEFINED,    //OCTET_STRING
             ViewByTypeOptions.UNDEFINED,    // UNICODE_STRING
@@ -43,7 +43,7 @@ public class ModelViewTransformer {
             ViewByTypeOptions.UNDEFINED,    //RESERVED
             ViewByTypeOptions.UNDEFINED,    //DOMAIN
             ViewByTypeOptions.INT,    //INTEGER24
-            ViewByTypeOptions.UNDEFINED,   //REAL64
+            ViewByTypeOptions.REAL,   //REAL64
             ViewByTypeOptions.INT,   //INTEGER40
             ViewByTypeOptions.INT,   //INTEGER48
             ViewByTypeOptions.INT,   //INTEGER56
@@ -112,6 +112,9 @@ public class ModelViewTransformer {
                 break;
             case ViewByTypeOptions.HEX:
                 retString = valToStringHexRaw(node);
+                break;
+            case ViewByTypeOptions.REAL:
+                retString=realToString(node.getValue());
                 break;
             case ViewByTypeOptions.UNDEFINED:
                 throw new InvalidTypeOfViewException("Not defined view for type. Try Hex_raw.");
@@ -183,6 +186,29 @@ public class ModelViewTransformer {
         return retString;
     }
 
+    /**
+     * Returns decimal String representation of the  byte array, for Real..
+     *
+     * @param values byte array is in little-endian  byte-order .
+     * @return  Signed decimal number  expressed in string .
+     */
+    public static String realToString(byte[] values)
+    {
+        String retString ="";
+        BigInteger bi= new BigInteger(changeEndian(values));
+        switch (values.length)
+        {
+            case 4:
+                retString= Float.toString(Float.intBitsToFloat(bi.intValue()));
+                break;
+            case 8:
+                retString=Double.toString(Double.longBitsToDouble(bi.longValue()));
+                break;
+            default: break;
+        }
+        return retString;
+    }
+
 //---------Transformation View-> Model byte array  ------------------------
     /**
      * Returns a byte array containing the value of first argument. Format for string is selected by choice..
@@ -233,6 +259,9 @@ public class ModelViewTransformer {
 
             case ViewByTypeOptions.HEX:
                 retArray = rawHexString2ValArray2(s);
+                break;
+            case ViewByTypeOptions.REAL:
+                retArray= realString2ValArray(s,node);
                 break;
 
             case ViewByTypeOptions.UNDEFINED:
@@ -325,6 +354,33 @@ public class ModelViewTransformer {
             ret[i] = tmp.byteValue();
         }
         return ret;
+    }
+
+    /**
+     * Returns a byte array containing the value of first argument. This method is for Real..
+     *
+     * @param s  string will be converted.
+     * @param node ODNode instance for determining length of type
+     * @return   a byte array containing the value of first argument.
+     */
+    public static byte[] realString2ValArray( String s, ODNode node)  throws NumberFormatException
+    {
+        //   System.out.println("text to real ");
+        byte[]retArray =null;
+        switch (ODNode.getDataTypeLength(node.dataType))
+        {
+            case 4:  // for REAL32
+                float data = Float.parseFloat(s);
+                retArray = longToByteArrayLittleEndian(Float.floatToRawIntBits(data), 4);
+                break;
+            case 8:    //  for REAL64
+                double datDou=Double.parseDouble(s);
+                retArray = longToByteArrayLittleEndian(Double.doubleToRawLongBits(datDou), 8);
+                break;
+
+        }
+        //   System.out.println("retArray "+Arrays.toString(retArray));
+        return retArray;
     }
 
 
