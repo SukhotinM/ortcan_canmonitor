@@ -10,6 +10,7 @@ package ocera.rtcan.monitor;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
+import ocera.rtcan.monitor.ui.SWCanMonStatusBar;
 import ocera.util.xmlconfig.XmlConfig;
 import ocera.util.*;
 import ocera.msg.*;
@@ -83,7 +84,7 @@ public class CanMonitor extends JFrame implements Runnable {
     public static final String CONFIG_FILE_NAME = "CanMonitor.conf.xml";
     protected boolean configChanged = false;
     private ConfigLookup confLookup = new ConfigLookup(".canmonitor", CONFIG_FILE_NAME, this.getClass());
-    private CanMonStatusBar statusBar = new CanMonStatusBar();
+    private SWCanMonStatusBar statusBar = new SWCanMonStatusBar();
     private JButton btSend;
     //private LinkedList candeviceList = new LinkedList();
     private JButton btClearLog;
@@ -436,8 +437,8 @@ public class CanMonitor extends JFrame implements Runnable {
         } else {
             statusBar.lbl1.setText(canConn.getSocket().toString());
         }
-        statusBar.lbl2.setText("");
-        statusBar.lbl3.setText("");
+        statusBar.lbl2.setText("label2");
+        statusBar.lbl3.setText("label3");
     }
 
     public void setTabLabel(int tabix, String lbl) {

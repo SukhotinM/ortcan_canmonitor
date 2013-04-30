@@ -35,7 +35,7 @@ public class CanMonStatusBar {
      */
     private void $$$setupUI$$$() {
         panel = new JPanel();
-        panel.setLayout(new GridLayoutManager(1, 3, new Insets(1, 0, 0, 0), 5, 0));
+        panel.setLayout(new  GridLayoutManager(1, 3, new Insets(1, 0, 0, 0), 5, 0));
         panel.setEnabled(false);
         final JPanel panel1 = new JPanel();
         panel1.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, 0));
