@@ -92,7 +92,7 @@ public class XmlConfPanel extends JPanel {
         return config;
     }
     /**
-     * assign config to show on the panel
+     * assign config to show on the mainPanel
      */
     public void setConfig(XmlConfig conf)
     {
@@ -306,7 +306,7 @@ public class XmlConfPanel extends JPanel {
         JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
 //        toolbar = createToolBar();
-//        panel.add("North", toolbar);
+//        mainPanel.add("North", toolbar);
         panel.add("Center", splpan);
 
         add("Center", panel);
